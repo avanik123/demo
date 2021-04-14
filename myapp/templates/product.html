@@ -21,23 +21,23 @@
               <div class="col-12">
                 <div class="card">
                   <div class="card-header">
-                    <h3 class="card-title">Product</h3>
+                    <h1 class="card-title">Product</h1>
+                    <button type="button" class="btn btn-primary addProduct" style="float: right;">Add Product</i></button>
                   </div>
                   <!-- /.card-header -->
                   <div class="card-body">
                     <table id="products" class="table table-bordered table-striped">
                       <thead>
                       <tr>
+                        <th>ID</th>
                         <th>Name</th>
                         <th>Action</th>
                       </tr>
                       </thead>
-                      <!-- <tbody>
-                        <tr></tr>
-                        <tr></tr>
-                      </tbody> -->
+                      
                       <tfoot>
                       <tr>
+                        <th>ID</th>
                         <th>Name</th>
                         <th>Action</th>
                       </tr>
@@ -57,33 +57,156 @@
         <!-- /.content -->
     </div>
     <!-- /.content-wrapper -->
+
+
+    <div class="modal" id="productPopup" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+          <div class="modal-content">
+          <div class="modal-header">
+              <h2 class="modal-title">Add Product</h2>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+          <div class="modal-body">
+              <form action="" id="updateproduct" method="POST">{% csrf_token %}
+                  <div id="alertdiv" class="alert" style="display:none;">
+                      <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                      <p></p>
+                  </div>
+                  <div class="form-group row">  
+                      <label class="col-sm-2 col-form-label">Name: </label> 
+                          <div class="col-sm-8">  
+                              <input type="text" id="name" placeholder="Enter product name" value="" required>
+                          </div>  
+                  </div>  
+              </form>
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-primary" id="addProduct">Submit</button>
+              <button class="btn btn-primary" type="button" id="updateProduct" style="display:none;">Update</button>
+              <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
+          </div>
+      </div>
+  </div>
 {% endblock %}
 
 {% include "footer.html" %}
 
 <script>
 
-    $(function () {
-      $('#products').DataTable({
-        "paging": true,
-        "lengthChange": true,
-        "searching": true,
-        "ordering": true,
-        "info": true,
-        "autoWidth": false,
-        "responsive": true,
-        'csrfmiddlewaretoken': '{{ csrf_token }}',
-        "processing": true,
-        "serverSide": true,
-        "ajax": {
-            url: "{% url 'listproducts1' %}",
-            type: "GET",
-            csrfmiddlewaretoken: "{{ csrf_token }}"
+  $(function () {
+    $('#products').DataTable({
+      "processing": true,
+      "serverSide": true,
+      "ajax": {
+        url: "{% url 'listproducts1' %}",
+        type: "GET",
+        csrfmiddlewaretoken: "{{ csrf_token }}"
+      },
+      "columns": [
+        {mdata: "id", data: "id"},
+        {mdata: "pro_name", data: "pro_name"},
+        {
+          mData: null,
+          bSortable: false,
+          mRender: function ({id}) { 
+            return `<button type="button" class="btn btn-success" id="editProduct" data-id="${id}">Edit</button> <button type="button" class="btn btn-danger" id="deleteProduct" data-id="${id}">Delete</button>`;}
+        }
+      ]
+    });
+
+
+    $("body").on('click', '.addProduct', function(){
+      $("#productPopup").modal('show');
+    });
+
+    $("#addProduct").click(function(){
+      pname = $("#name").val();
+
+      $.ajax({
+        url: "{% url 'createproduct' %}",
+        type: "POST",
+        data: {
+          pro_name: pname,
+          csrfmiddlewaretoken: "{{ csrf_token }}",
         },
-        "columns": [
-					{pro_name: "pro_name", data: "pro_name"},
-          {action: "action", data: "action"},
-        ]
+        success: function(data, status, xhr)
+        {
+          if(data.success == "True")
+          {
+            location.reload();
+          }
+        },
+      });
+    }); 
+
+    $("body").on('click', '#editProduct', function(){
+      $("#productPopup").modal('show');
+      $(".modal-title").replaceWith("<h2>Edit Product</h2>");
+      $("#updateProduct").show();
+      $("#addProduct").hide();
+      id = $(this).attr('data-id');
+      $.ajax({
+        url: "{% url 'product' %}",
+        type: 'GET',
+        data: {
+          'product_id' : id,
+        },
+        success: function(data, status, xhr)
+        {
+          console.log(data);
+        },
       });
     });
-  </script>
+
+    $("#updateProduct").click(function(){
+      pro_name = $("#name").val();
+
+      $.ajax({
+        url: "{% url 'product' %}",
+        type: "PATCH",
+        data: {
+          product: id,
+          pro_name: pro_name,
+          csrfmiddlewaretoken: "{{ csrf_token }}",
+        },
+        success: function(data, status, xhr){
+          if(data.success == "True")
+          {
+            $("#alertdiv").removeClass("alert-danger").addClass("alert-success")
+          }
+          else
+          {
+            $("#alertdiv").removeClass("alert-success").addClass("alert-danger")
+          }
+          $("#alertdiv p").html(data.msg)
+          $("#alertdiv").show();
+        }
+      });
+    });
+
+    $("body").on('click', '#deleteProduct', function(){
+      id = $(this).attr('data-id');
+      var isconfirm = confirm('Are you sure you want to delete product?');
+      if(isconfirm)
+      {
+        $.ajax({
+          url: "{% url 'product' %}",
+          type: 'DELETE',
+          data: {
+            product_id : id,
+            csrfmiddlewaretoken: "{{ csrf_token }}",
+          },
+          success: function(data, status, xhr){
+            if(data.success == "True")
+            {
+              location.reload();
+            }
+          },
+        });  
+      }
+    });
+  });
+</script>

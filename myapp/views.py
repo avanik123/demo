@@ -186,9 +186,9 @@ class DatatablesServerSideView(View):
 
 class ProductDatatableView(DatatablesServerSideView):
 	model = models.Product
-	columns = ['pro_name']
+	columns = ['id', 'pro_name']
 	searchable_columns = ['pro_name']
-    # orderable_columns = []
+    # sortable = ['id']
 
 	def get_initial_queryset(self):
 		qs = super(ProductDatatableView, self).get_initial_queryset()
@@ -214,8 +214,8 @@ class ProductTemplate(TemplateView):
         return context
 
 
-class ProductDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = models.Product.objects.all()
+class ProductDetail(generics.RetrieveUpdateAPIView):
+    queryset = models.Product.objects.filter()
     serializer_class = serializers.ProductSerializer
 
 
@@ -240,12 +240,11 @@ class ProductPutUpdate(generics.UpdateAPIView):
     http_method_names = ['put']
 
     def get_queryset(self):
-        return self.model.objects.all(id)
+        return self.model.objects.filter(id)
 
     def update(self, request, *args, **kwargs):
         try:
             response = super(ProductPutUpdate, self).update(self, request, *args, **kwargs)
-            print(response)
             return Response({'success': True, 'data': response.data})
         except Exception as e:
             print(e)
@@ -263,6 +262,7 @@ class ProductDelete(generics.DestroyAPIView):
     def delete(self, request, *args, **kwargs):
         try:
             response = super(ProductDelete, self).delete(request, *args, **kwargs)
+            print(response)
             return Response({"status": True, "message": "Product deleted successfully."}, status=status.HTTP_200_OK)
         except Exception as e:
             print(e)
