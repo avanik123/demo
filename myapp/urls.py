@@ -1,15 +1,20 @@
+from django.conf.urls import url
 from django.urls import path, include
 from . import views
 
 urlpatterns = [
-    path('listproducts1', views.ProductDatatableView.as_view(), name='listproducts1'),
-
-    path('', views.LoginTemplate.as_view(), name='login'),
+    url(r'^$', views.LoginTemplate.as_view(), name='login'),
     path('index', views.HomeTemplate.as_view(), name='index'),
-    path('product', views.ProductTemplate.as_view(), name='product'),
 
-    path('products/<int:pk>', views.ProductDetail.as_view(), name='products'),
-    path('createproduct', views.Product.as_view(), name='createproduct'),
-    path('updateproduct/<int:id>', views.ProductPutUpdate.as_view(), name='updateproduct'),
-    path('deleteproduct/<int:id>', views.ProductDelete.as_view(), name='deleteproduct'),
+    path('listproduct', views.ProductDatatableView.as_view(), name='listproduct'),
+    path('product', views.ProductTemplate.as_view(), name='product'),
+    path('editproduct', views.EditProduct.as_view(), name='editproduct'),
+    path('deleteproduct', views.DeleteProduct.as_view(), name='deleteproduct'),
+
+    path('listroll', views.RollDatatableView.as_view(), name='listroll'),
+    path('roll', views.RollTemplate.as_view(), name='roll'),
+    path('editroll', views.EditRoll.as_view(), name='editroll'),
+    path('deleteroll', views.DeleteRoll.as_view(), name='deleteroll'),
+
+    path('readfile', views.read_file, name='readfile'),
 ]

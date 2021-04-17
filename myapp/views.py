@@ -1,13 +1,13 @@
 from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.views.generic import TemplateView
-from myapp import models
-from myapp import serializers
-from rest_framework import generics
-from rest_framework import status
+from django.views import generic
 from django.contrib import messages
-from rest_framework.response import Response
-from django.core.serializers import serialize
-
+from django.core import serializers
+import json
+from django.views.generic.base import View
+from .models import *
 
 from django.core.paginator import Paginator
 from django.core.serializers.json import DjangoJSONEncoder
@@ -20,9 +20,7 @@ from myapp.parameters import (
     Order, ColumnOrderError)
 import json
 
-
 DATATABLES_SERVERSIDE_MAX_COLUMNS = 30
-
 
 class DatatablesServerSideView(View):
     columns = []
@@ -184,88 +182,168 @@ class DatatablesServerSideView(View):
         return qs.filter(search_filters)
 
 
+class LoginTemplate(generic.TemplateView):
+    template_name = 'login.html'
+    model = User
+
+    def post(self, request, *args, **kwargs):
+        email = self.request.POST.get('email')
+        password = self.request.POST.get('password')
+        try:
+            u = User.objects.get(email=email)
+            message = "Invalid password"
+            if u.check_password(password) is True:
+                request.session['user_login'] = True
+                udata = {'id':u.id, 'email':u.email, 'is_active':u.is_active }
+                request.session['user_data'] = udata
+                return HttpResponseRedirect('index')
+            else:
+                return render(request, self.template_name, {'msg': message})
+        except Exception:
+            print(e)
+            message = "Invalid email"
+            return render(request, self.template_name, {'msg': message})
+
+
+class HomeTemplate(generic.TemplateView):
+    template_name = 'index.html'
+    model = User
+
+    def get(self, request):
+            user_login = request.session.get("user_login", False)
+            if user_login is True:
+                u = request.session["user_data"]
+                user = User.objects.get(email=u['email'])
+                return render(request, self.template_name, {'user': user})
+            else:
+                return HttpResponseRedirect('/')          
+
+
 class ProductDatatableView(DatatablesServerSideView):
-	model = models.Product
-	columns = ['id', 'pro_name']
+	model = Product
+	columns = ['id', 'pro_name', 'created_on', 'updated_on']
 	searchable_columns = ['pro_name']
-    # sortable = ['id']
 
 	def get_initial_queryset(self):
-		qs = super(ProductDatatableView, self).get_initial_queryset()
+		qs = super(ProductDatatableView, self).get_initial_queryset().order_by('-id')
 		return qs
 
 
-class LoginTemplate(TemplateView):
-    template_name = 'login.html'
-
-
-class HomeTemplate(TemplateView):
-    template_name = 'index.html'
-
-
-class ProductTemplate(TemplateView):
-    queryset = models.Product.objects.all()
+class ProductTemplate(generic.TemplateView):
     template_name = 'product.html'
-    model = models.Product
+    model = Product
 
     def get_context_data(self, **kwargs):
         context = super(ProductTemplate, self).get_context_data(**kwargs)
-        context['products'] = models.Product.objects.all()
+        context['products'] = Product.objects.all()
         return context
 
-
-class ProductDetail(generics.RetrieveUpdateAPIView):
-    queryset = models.Product.objects.filter()
-    serializer_class = serializers.ProductSerializer
-
-
-class Product(generics.CreateAPIView):
-    serializer_class = serializers.ProductSerializer
-    model = models.Product
-
-    def create(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
+        pname = self.request.POST.get('pname')
         try:
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            self.perform_create(serializer)
-            return Response({"status": 200, "message": 'created successfully.'}, status=status.HTTP_201_CREATED)
+            p = Product()
+            p.pro_name = pname
+            p.save()
+            message = "Product added successfully"
+            return JsonResponse({'success': True, 'msg':message})
         except Exception as e:
-            return Response({"status": 400, "message": "Fail to create"}, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({'success': False})
 
 
-class ProductPutUpdate(generics.UpdateAPIView):
-    serializer_class = serializers.ProductSerializer
-    model = models.Product
-    lookup_field = 'id'
-    http_method_names = ['put']
+class EditProduct(generic.TemplateView):
+    template_name = 'product.html'
+    model = Product
 
-    def get_queryset(self):
-        return self.model.objects.filter(id)
+    def get(self, request, *args, **kwargs):
+        product_id = self.request.GET.get('product_id')
+        pdata = Product.objects.filter(id=product_id)
+        product_list = serializers.serialize('json', pdata)
+        return JsonResponse(json.loads(product_list)[0]['fields'])
 
-    def update(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
+        product_id = request.POST.get('product_id')
+        pname = request.POST.get('pname')
         try:
-            response = super(ProductPutUpdate, self).update(self, request, *args, **kwargs)
-            return Response({'success': True, 'data': response.data})
-        except Exception as e:
-            print(e)
-            return Response({'message': format(e.args[-1]), 'success': False})
+            p = Product.objects.get(id=product_id)
+            p.pro_name = pname
+            p.save()
+            message = "Product details successfully updated"
+            return JsonResponse({'success': True, 'msg':message})
+        except ValidationError as e:
+            return JsonResponse({'success': False, 'msg':str(e)})
 
 
-class ProductDelete(generics.DestroyAPIView):
-    serializer_class = serializers.ProductSerializer
-    model = models.Product
-    lookup_field = 'id'
+class DeleteProduct(View):
+    def get(self, request, *args, **kwargs):
+        product_id = self.request.GET.get('product_id')
+        Product.objects.filter(id=product_id).delete()
+        return JsonResponse({'success': True})
 
-    def get_queryset(self):
-        return self.model.objects.all()
 
-    def delete(self, request, *args, **kwargs):
+class RollDatatableView(DatatablesServerSideView):
+	model = Roll
+	columns = ['id', 'roll', 'created_on', 'updated_on']
+	searchable_columns = ['roll']
+
+	def get_initial_queryset(self):
+		qs = super(RollDatatableView, self).get_initial_queryset().order_by('-id')
+		return qs
+
+
+class RollTemplate(generic.TemplateView):
+    template_name = 'roll.html'
+    model = Roll
+
+    def get_context_data(self, **kwargs):
+        context = super(RollTemplate, self).get_context_data(**kwargs)
+        context['rolls'] = Roll.objects.all()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        roll = self.request.POST.get('roll')
         try:
-            response = super(ProductDelete, self).delete(request, *args, **kwargs)
-            print(response)
-            return Response({"status": True, "message": "Product deleted successfully."}, status=status.HTTP_200_OK)
-        except Exception as e:
-            print(e)
-            return Response({"status": False, "message": "Fail to delete product"}, status=status.HTTP_400_BAD_REQUEST)
+            r = Roll()
+            r.roll = roll
+            r.save()
+            message = "roll added successfully"
+            return JsonResponse({'success': True, 'msg':message})
+        except ValidationError as e:
+            return JsonResponse({'success': False, 'msg':str(e)})
 
+
+class EditRoll(generic.TemplateView):
+    template_name = 'roll.html'
+    model = Roll
+
+    def get(self, request, *args, **kwargs):
+        roll_id = self.request.GET.get('roll_id')
+        rdata = Roll.objects.filter(id=roll_id)
+        roll_list = serializers.serialize('json', rdata)
+        return JsonResponse(json.loads(roll_list)[0]['fields'])
+
+    def post(self, request, *args, **kwargs):
+        roll_id = request.POST.get('roll_id')
+        roll = request.POST.get('roll')
+        try:
+            r = Roll.objects.get(id=roll_id)
+            r.roll = roll
+            r.save()
+            message = "Roll details successfully updated"
+            return JsonResponse({'success': True, 'msg':message})
+        except ValidationError as e:
+            return JsonResponse({'success': False, 'msg':str(e)})
+
+
+class DeleteRoll(View):
+    def get(self, request, *args, **kwargs):
+        roll_id = self.request.GET.get('roll_id')
+        Roll.objects.filter(id=roll_id).delete()
+        return JsonResponse({'success': True})
+
+
+def read_file(request):
+    f = open('myapp/views.py', 'r')
+    file_content = f.read()
+    f.close()
+    return HttpResponse(file_content, content_type="text/plain")
 
