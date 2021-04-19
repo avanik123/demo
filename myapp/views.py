@@ -194,9 +194,10 @@ class LoginTemplate(generic.TemplateView):
             message = "Invalid password"
             if u.check_password(password) is True:
                 request.session['user_login'] = True
-                udata = {'id':u.id, 'email':u.email, 'is_active':u.is_active }
+                udata = {'id':u.id, 'email':u.email, 'password':u.password }
+                print(udata)
                 request.session['user_data'] = udata
-                return HttpResponseRedirect('index')
+                return HttpResponseRedirect('/index')
             else:
                 return render(request, self.template_name, {'msg': message})
         except Exception:
@@ -280,30 +281,30 @@ class DeleteProduct(View):
         return JsonResponse({'success': True})
 
 
-class RollDatatableView(DatatablesServerSideView):
-	model = Roll
-	columns = ['id', 'roll', 'created_on', 'updated_on']
-	searchable_columns = ['roll']
+class RoleDatatableView(DatatablesServerSideView):
+	model = Role
+	columns = ['id', 'role', 'created_on', 'updated_on']
+	searchable_columns = ['role']
 
 	def get_initial_queryset(self):
-		qs = super(RollDatatableView, self).get_initial_queryset().order_by('-id')
+		qs = super(RoleDatatableView, self).get_initial_queryset().order_by('-id')
 		return qs
 
 
-class RollTemplate(generic.TemplateView):
+class RoleTemplate(generic.TemplateView):
     template_name = 'roll.html'
-    model = Roll
+    model = Role
 
     def get_context_data(self, **kwargs):
-        context = super(RollTemplate, self).get_context_data(**kwargs)
-        context['rolls'] = Roll.objects.all()
+        context = super(RoleTemplate, self).get_context_data(**kwargs)
+        context['rolls'] = Role.objects.all()
         return context
 
     def post(self, request, *args, **kwargs):
-        roll = self.request.POST.get('roll')
+        role = self.request.POST.get('role')
         try:
-            r = Roll()
-            r.roll = roll
+            r = Role()
+            r.role = role
             r.save()
             message = "roll added successfully"
             return JsonResponse({'success': True, 'msg':message})
@@ -311,22 +312,22 @@ class RollTemplate(generic.TemplateView):
             return JsonResponse({'success': False, 'msg':str(e)})
 
 
-class EditRoll(generic.TemplateView):
+class EditRole(generic.TemplateView):
     template_name = 'roll.html'
-    model = Roll
+    model = Role
 
     def get(self, request, *args, **kwargs):
-        roll_id = self.request.GET.get('roll_id')
-        rdata = Roll.objects.filter(id=roll_id)
-        roll_list = serializers.serialize('json', rdata)
-        return JsonResponse(json.loads(roll_list)[0]['fields'])
+        role_id = self.request.GET.get('role_id')
+        rdata = Role.objects.filter(id=role_id)
+        role_list = serializers.serialize('json', rdata)
+        return JsonResponse(json.loads(role_list)[0]['fields'])
 
     def post(self, request, *args, **kwargs):
-        roll_id = request.POST.get('roll_id')
-        roll = request.POST.get('roll')
+        role_id = request.POST.get('role_id')
+        role = request.POST.get('role')
         try:
-            r = Roll.objects.get(id=roll_id)
-            r.roll = roll
+            r = Role.objects.get(id=role_id)
+            r.role = role
             r.save()
             message = "Roll details successfully updated"
             return JsonResponse({'success': True, 'msg':message})
@@ -334,16 +335,73 @@ class EditRoll(generic.TemplateView):
             return JsonResponse({'success': False, 'msg':str(e)})
 
 
-class DeleteRoll(View):
+class DeleteRole(View):
     def get(self, request, *args, **kwargs):
-        roll_id = self.request.GET.get('roll_id')
-        Roll.objects.filter(id=roll_id).delete()
+        role_id = self.request.GET.get('role_id')
+        Role.objects.filter(id=role_id).delete()
         return JsonResponse({'success': True})
 
 
-def read_file(request):
-    f = open('myapp/views.py', 'r')
-    file_content = f.read()
-    f.close()
-    return HttpResponse(file_content, content_type="text/plain")
+class PermissionDatatableView(DatatablesServerSideView):
+	model = Role
+	columns = ['id', 'controller', 'method', 'created_on', 'updated_on']
+	searchable_columns = ['method']
 
+	def get_initial_queryset(self):
+		qs = super(PermissionDatatableView, self).get_initial_queryset().order_by('-id')
+		return qs
+
+
+class PermissionTemplate(generic.TemplateView):
+    template_name = 'permission.html'
+    model = Permission
+
+    def get_context_data(self, **kwargs):
+        context = super(PermissionTemplate, self).get_context_data(**kwargs)
+        context['permissions'] = Permission.objects.all()
+        return context
+
+    def post(self, request, *args, **kwargs):
+        controller = self.request.POST.get('controller')
+        method = self.request.POST.get('method')
+        try:
+            p = Permission()
+            p.controller = controller
+            p.method = method
+            p.save()
+            message = "permission added successfully"
+            return JsonResponse({'success': True, 'msg':message})
+        except Exception as e:
+            return JsonResponse({'success': False, 'msg':str(e)})
+
+
+class EditPermission(generic.TemplateView):
+    template_name = 'permission.html'
+    model = Permission
+
+    def get(self, request, *args, **kwargs):
+        permission_id = self.request.GET.get('permission_id')
+        pdata = Permission.objects.filter(id=permission_id)
+        permission_list = serializers.serialize('json', rdata)
+        return JsonResponse(json.loads(permission_list)[0]['fields'])
+
+    def post(self, request, *args, **kwargs):
+        permission_id = request.POST.get('permission_id')
+        controller = request.POST.get('controller')
+        method = request.POST.get('methood')
+        try:
+            p = Permission.objects.get(id=permission_id)
+            p.controller = controller
+            p.method = method
+            p.save()
+            message = "Permission details successfully updated"
+            return JsonResponse({'success': True, 'msg':message})
+        except ValidationError as e:
+            return JsonResponse({'success': False, 'msg':str(e)})
+
+
+class DeletePermission(View):
+    def get(self, request, *args, **kwargs):
+        permission_id = self.request.GET.get('permission_id')
+        Permission.objects.filter(id=permission_id).delete()
+        return JsonResponse({'success': True})

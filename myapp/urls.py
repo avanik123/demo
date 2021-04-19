@@ -11,10 +11,14 @@ urlpatterns = [
     path('editproduct', views.EditProduct.as_view(), name='editproduct'),
     path('deleteproduct', views.DeleteProduct.as_view(), name='deleteproduct'),
 
-    path('listroll', views.RollDatatableView.as_view(), name='listroll'),
-    path('roll', views.RollTemplate.as_view(), name='roll'),
-    path('editroll', views.EditRoll.as_view(), name='editroll'),
-    path('deleteroll', views.DeleteRoll.as_view(), name='deleteroll'),
+    path('listrole', views.RoleDatatableView.as_view(), name='listrole'),
+    path('role', views.RoleTemplate.as_view(), name='role'),
+    path('editrole', views.EditRole.as_view(), name='editrole'),
+    path('deleterole', views.DeleteRole.as_view(), name='deleterole'),
 
-    path('readfile', views.read_file, name='readfile'),
+    path('listpermission', views.PermissionDatatableView.as_view(), name='listpermission'),
+    path('permission', views.PermissionTemplate.as_view(), name='permission'),
+    path('editpermission', views.EditPermission.as_view(), name='editpermission'),
+    path('deletepermission', views.DeletePermission.as_view(), name='deletepermission'),
+
 ]

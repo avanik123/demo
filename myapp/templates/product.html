@@ -22,7 +22,7 @@
             <div class="card">
               <div class="card-header">
                 <h1 class="card-title">Product</h1>
-                <button type="button" class="btn btn-primary addProduct" style="float: right;"><i class="fas fa-plus"></i></button>
+                <button type="button" class="btn btn-primary addProduct" style="float: right;">Add Product</i></button>
               </div>
               <!-- /.card-header -->
               <div class="card-body">
@@ -117,7 +117,7 @@
           bSortable: false,
           mRender: function ({id}) 
           { 
-            return `<button type="button" class="btn btn-success" id="editProduct" data-id="${id}"><i class="nav-icon fas fa-pen"></i></button> <button type="button" class="btn btn-danger" id="deleteProduct" data-id="${id}"><i class="nav-icon fas fa-trash"></button>`;
+            return `<button type="button" class="btn btn-primary" id="editProduct" data-id="${id}"><i class="nav-icon fas fa-pen"></i></button> <button type="button" class="btn btn-danger" id="deleteProduct" data-id="${id}"><i class="nav-icon fas fa-trash"></button>`;
           }
         },
       ]
@@ -131,7 +131,7 @@
       pname = $("#name").val();
       $.ajax({
         url: "{% url 'product' %}",
-        type: "GET",
+        type: "POST",
         data: {
           pname: pname,
           csrfmiddlewaretoken: "{{ csrf_token }}",

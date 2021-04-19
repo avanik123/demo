@@ -21,16 +21,16 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h1 class="card-title">Roll</h1>
-                                <button type="button" class="btn btn-primary addRoll" style="float: right;"><i class="fas fa-plus"></i></button>
+                                <h1 class="card-title">Roles</h1>
+                                <button type="button" class="btn btn-primary addRole" style="float: right;">Add Role</i></button>
                             </div>
                             <!-- /.card-header -->
                             <div class="card-body">
-                                <table id="rolls" class="table table-bordered table-striped">
+                                <table id="roles" class="table table-bordered table-striped">
                                 <thead>
                                 <tr>
                                     <th>Id</th>
-                                    <th>Roll</th>
+                                    <th>Role</th>
                                     <th>Created_on</th>
                                     <th>Updated_on</th>
                                     <th>Action</th>
@@ -40,7 +40,7 @@
                                 <tfoot>
                                 <tr>
                                     <th>Id</th>
-                                    <th>Roll</th>
+                                    <th>Role</th>
                                     <th>Created_on</th>
                                     <th>Updated_on</th>
                                     <th>Action</th>
@@ -62,17 +62,17 @@
     </div>
     <!-- /.content-wrapper -->
 
-    <div class="modal" id="rollPopup" tabindex="-1" role="dialog">
+    <div class="modal" id="rolePopup" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 class="modal-title">Add Product</h2>
+                    <h2 class="modal-title">Add Role</h2>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form action="" id="roll" method="POST">{% csrf_token %}
+                    <form action="" id="role" method="POST">{% csrf_token %}
                         <div id="alertdiv" class="alert" style="display:none;">
                             <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
                             <p></p>
@@ -86,8 +86,8 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="addRoll">Submit</button>
-                    <button class="btn btn-primary" type="button" id="updateRoll" style="display:none;">Update</button>
+                    <button type="button" class="btn btn-primary" id="addRole">Submit</button>
+                    <button class="btn btn-primary" type="button" id="updateRole" style="display:none;">Update</button>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -99,17 +99,17 @@
 
 <script>
     $(function () {
-        $('#rolls').DataTable({
+        $('#roles').DataTable({
             "processing": true,
             "serverSide": true,
             "ajax": {
-                url: "{% url 'listroll' %}",
+                url: "{% url 'listrole' %}",
                 type: "GET",
                 csrfmiddlewaretoken: "{{ csrf_token }}"
             },
             "columns": [
                 {mdata: "id", data: "id"},
-                {mdata: "roll", data: "roll"},
+                {mdata: "role", data: "role"},
                 {mdata: "created_on", data: "created_on"},
                 {mdata: "updated_on", data: "updated_on"},
                 {
@@ -117,77 +117,81 @@
                     bSortable: false,
                     mRender: function ({id})
                     { 
-                        return `<button type="button" class="btn btn-primary" id="editRoll" data-id="${id}"><i class="fas fa-pen"></i></button> 
-                        <button type="button" class="btn btn-danger" id="deleteRoll" data-id="${id}"><i class="fas fa-trash"></i></button>
-                        <a class="btn btn-success" id="permission" href="{% url 'permission' %}">Permission</a>`;
+                        return `<button type="button" class="btn btn-primary" id="editRole" data-id="${id}"><i class="fas fa-pen"></i></button> 
+                        <button type="button" class="btn btn-danger" id="deleteRole" data-id="${id}"><i class="fas fa-trash"></i></button>
+                        `;
                     }
                 },
             ]
         });
 
-        $("body").on('click', '.addRoll', function(){
-            $("#rollPopup").modal('show');
+        $("body").on('click', '.addRole', function(){
+            $("#rolePopup").modal('show');
         });
 
-        $("#addRoll").click(function(){
+        $("#addRole").click(function(){
             roll = $("#name").val();
             $.ajax({
-                url: "{% url 'roll' %}",
+                url: "{% url 'role' %}",
                 type: "POST",
                 data: {
-                    roll: roll,
+                    role: role,
                     csrfmiddlewaretoken: "{{ csrf_token }}",
                 },
                 success: function(data, status, xhr)
                 {
-                    $('#rolls').DataTable().ajax.reload( null, false );
+                    $('#roles').DataTable().ajax.reload( null, false );
+                    $("#role")[0].reset();
+                    $("#rolePopup").modal('hide');
                 },
             });
         }); 
 
-        $("body").on('click', '#editRoll', function(){
+        $("body").on('click', '#editRole', function(){
             id = $(this).attr('data-id');
             $.ajax({
-                url: "{% url 'editroll' %}",
+                url: "{% url 'editrole' %}",
                 type: 'GET',
                 data: {
-                    'roll_id' : id,
+                    'role_id' : id,
                 },
                 success: function(data, status, xhr)
                 {
-                    $('#name').val(data.roll);
-                    $("#rollPopup").modal('show');
-                    $(".modal-title").replaceWith("<h2>Edit Roll</h2>");
-                    $("#updateRoll").show();
-                    $("#addRoll").hide();
+                    $('#name').val(data.role);
+                    $("#rolePopup").modal('show');
+                    $(".modal-title").replaceWith("<h2>Edit Role</h2>");
+                    $("#updateRole").show();
+                    $("#addRole").hide();
                 },
             });
         });
 
-        $("#updateRoll").click(function(){
-            roll = $("#name").val();
+        $("#updateRole").click(function(){
+            role = $("#name").val();
             $.ajax({
-                url: "{% url 'editroll' %}",
+                url: "{% url 'editrole' %}",
                 type: "POST",
                 data: {
-                    roll_id: id,
-                    roll: roll,
+                    role_id: id,
+                    role: role,
                     csrfmiddlewaretoken: "{{ csrf_token }}",
                 },
                 success: function(data, status, xhr)
                 {
-                    $('#rolls').DataTable().ajax.reload( null, false );
+                    $('#roles').DataTable().ajax.reload( null, false );
+                    $("#role")[0].reset();
+                    $("#rolePopup").modal('hide');
                 },
             });
         });
 
-        $("body").on('click', '#deleteRoll', function(){
+        $("body").on('click', '#deleteRole', function(){
             id = $(this).attr('data-id');
-            var isconfirm = confirm('Are you sure you want to delete roll?');
+            var isconfirm = confirm('Are you sure you want to delete role?');
             if(isconfirm)
             {
                 $.ajax({
-                url: "{% url 'deleteroll' %}",
+                url: "{% url 'deleterole' %}",
                 type: 'GET',
                 data: {
                     roll_id : id,
@@ -195,7 +199,7 @@
                 },
                 success: function(data, status, xhr)
                 {
-                    $('#rolls').DataTable().ajax.reload( null, false );
+                    $('#roles').DataTable().ajax.reload( null, false );
                 },
                 });  
             }

@@ -22,28 +22,30 @@
                         <div class="card">
                             <div class="card-header">
                                 <h1 class="card-title">Roll</h1>
-                                <button type="button" class="btn btn-primary addRoll" style="float: right;"><i class="fas fa-plus"></i></button>
+                                <button type="button" class="btn btn-primary addPermission" style="float: right;">Add Permission</i></button>
                             </div>
                             <!-- /.card-header -->
                             <div class="card-body">
-                                <table id="permissions" class="table table-bordered table-striped">
+                                <table id="permission" class="table table-bordered table-striped">
                                 <thead>
                                 <tr>
                                     <th>Id</th>
-                                    <th>Permission</th>
-                                    <th>Roll</th>
+                                    <th>Controller</th>
+                                    <th>Method</th>
                                     <th>Created_on</th>
                                     <th>Updated_on</th>
+                                    <th>Action</th>
                                 </tr>
                                 </thead>
                                 
                                 <tfoot>
                                 <tr>
                                     <th>Id</th>
-                                    <th>Permission</th>
-                                    <th>Roll</th>
+                                    <th>Controller</th>
+                                    <th>Method</th>
                                     <th>Created_on</th>
                                     <th>Updated_on</th>
+                                    <th>Action</th>
                                 </tr>
                                 </tfoot>
                                 </table>
@@ -62,32 +64,38 @@
     </div>
     <!-- /.content-wrapper -->
 
-    <div class="modal" id="rollPopup" tabindex="-1" role="dialog">
+    <div class="modal" id="permissionPopup" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 class="modal-title">Add Product</h2>
+                    <h2 class="modal-title">Add Permission</h2>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form action="" id="roll" method="POST">{% csrf_token %}
+                    <form action="" id="permission" method="POST">{% csrf_token %}
                         <div id="alertdiv" class="alert" style="display:none;">
                             <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
                             <p></p>
                         </div>
                         <div class="form-group row">  
-                            <label class="col-sm-2 col-form-label">Roll: </label> 
-                                <div class="col-sm-8">  
-                                    <input type="text" id="name" placeholder="Enter roll" value="" required>
+                            <label class="col-sm-2 col-form-label">Controller: </label> 
+                                <div class="col-sm-12">  
+                                    <input type="text" id="controller" placeholder="Enter controller" value="" required>
+                                </div>  
+                        </div>  
+                        <div class="form-group row">  
+                            <label class="col-sm-2 col-form-label">Method: </label> 
+                                <div class="col-sm-12">  
+                                    <input type="text" id="method" placeholder="Enter method" value="" required>
                                 </div>  
                         </div>  
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="addRoll">Submit</button>
-                    <button class="btn btn-primary" type="button" id="updateRoll" style="display:none;">Update</button>
+                    <button type="button" class="btn btn-primary" id="addPermission">Submit</button>
+                    <button class="btn btn-primary" type="button" id="updatePermission" style="display:none;">Update</button>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -99,7 +107,7 @@
 
 <script>
     $(function () {
-        $('#permissions').DataTable({
+        $('#permission').DataTable({
             "processing": true,
             "serverSide": true,
             "ajax": {
@@ -109,11 +117,107 @@
             },
             "columns": [
                 {mdata: "id", data: "id"},
-                {mdata: "permission", data: "permission"},
-                {mdata: "roll", data: "roll"},
+                {mdata: "controller", data: "controller"},
+                {mdata: "method", data: "method"},
                 {mdata: "created_on", data: "created_on"},
                 {mdata: "updated_on", data: "updated_on"},
+                {
+                    mData: null,
+                    bSortable: false,
+                    mRender: function ({id}) 
+                    { 
+                        return `<button type="button" class="btn btn-primary" id="editPermission" data-id="${id}"><i class="nav-icon fas fa-pen"></i></button> <button type="button" class="btn btn-danger" id="deletePermission" data-id="${id}"><i class="nav-icon fas fa-trash"></button>`;
+                    }
+                    },
             ]
+        });
+        
+        $("body").on('click', '.addPermission', function(){
+            $("#permissionPopup").modal('show');
+        });
+
+        $("#addPermission").click(function(){
+            controller = $("#controller").val();
+            method = $("#method").val();
+            $.ajax({
+                url: "{% url 'permission' %}",
+                type: "POST",
+                data: {
+                    controller: controller,
+                    method: method,
+                    csrfmiddlewaretoken: "{{ csrf_token }}",
+                },
+                success: function(data, status, xhr)
+                {
+                    $('#permission').DataTable().ajax.reload(null, false);
+                    $("#permission")[0].reset();
+                    $("#permissionPopup").modal('hide');
+                },
+                error: function(jqXHR, textStatus, errorThrown){
+                    console.log(e);
+                }
+            });
+        }); 
+
+        $("body").on('click', '#editPermission', function(){
+            id = $(this).attr('data-id');
+            $.ajax({
+                url: "{% url 'editpermission' %}",
+                type: 'GET',
+                data: {
+                    'permission_id' : id,
+                },
+                success: function(data, status, xhr)
+                {
+                    $('#controller').val(data.controller);
+                    $('#method').val(data.method);
+                    $("#permissionPopup").modal('show');
+                    $(".modal-title").replaceWith("<h2>Edit Permission</h2>");
+                    $("#updatePermission").show();
+                    $("#addPermission").hide();
+                },
+            });
+        });
+
+        $("#updatePermission").click(function(){
+            controller = $("#controller").val();
+            method = $("#method").val();
+            $.ajax({
+                url: "{% url 'editpermission' %}",
+                type: "POST",
+                data: {
+                    role_id: id,
+                    role: role,
+                    method: method,
+                    csrfmiddlewaretoken: "{{ csrf_token }}",
+                },
+                success: function(data, status, xhr)
+                {
+                    $('#permission').DataTable().ajax.reload( null, false );
+                    $("#permission")[0].reset();
+                    $("#permissionPopup").modal('hide');
+                },
+            });
+        });
+
+        $("body").on('click', '#deletePermission', function(){
+            id = $(this).attr('data-id');
+            var isconfirm = confirm('Are you sure you want to delete permission?');
+            if(isconfirm)
+            {
+                $.ajax({
+                url: "{% url 'deletepermission' %}",
+                type: 'GET',
+                data: {
+                    permission_id : id,
+                    csrfmiddlewaretoken: "{{ csrf_token }}",
+                },
+                success: function(data, status, xhr)
+                {
+                    $('#roles').DataTable().ajax.reload( null, false );
+                },
+                });  
+            }
         });
     });
 </script>
