@@ -8,7 +8,7 @@
             <div class="container-fluid">
                 <div class="row mb-2">
                     <div class="col-sm-6">
-                        <h1>DataTables</h1>
+                        <h1>Permission</h1>
                     </div>
                 </div>
             </div><!-- /.container-fluid -->
@@ -21,7 +21,7 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h1 class="card-title">Roll</h1>
+                                <h1 class="card-title">Permission</h1>
                                 <button type="button" class="btn btn-primary addPermission" style="float: right;">Add Permission</i></button>
                             </div>
                             <!-- /.card-header -->
@@ -30,7 +30,7 @@
                                 <thead>
                                 <tr>
                                     <th>Id</th>
-                                    <th>Controller</th>
+                                    <th>Permission</th>
                                     <th>Method</th>
                                     <th>Created_on</th>
                                     <th>Updated_on</th>
@@ -41,7 +41,7 @@
                                 <tfoot>
                                 <tr>
                                     <th>Id</th>
-                                    <th>Controller</th>
+                                    <th>Permission</th>
                                     <th>Method</th>
                                     <th>Created_on</th>
                                     <th>Updated_on</th>
@@ -79,16 +79,16 @@
                             <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
                             <p></p>
                         </div>
-                        <div class="form-group row">  
-                            <label class="col-sm-2 col-form-label">Controller: </label> 
+                        <div class="form-group">  
+                            <label class="col-sm-2 col-form-label">Permission: </label> 
                                 <div class="col-sm-12">  
-                                    <input type="text" id="controller" placeholder="Enter controller" value="" required>
+                                    <input type="text" class="form-control" id="name" placeholder="Enter permission" value="" required>
                                 </div>  
                         </div>  
-                        <div class="form-group row">  
+                        <div class="form-group">  
                             <label class="col-sm-2 col-form-label">Method: </label> 
                                 <div class="col-sm-12">  
-                                    <input type="text" id="method" placeholder="Enter method" value="" required>
+                                    <input type="text" class="form-control" id="method" placeholder="Enter method" value="" required>
                                 </div>  
                         </div>  
                     </form>
@@ -117,7 +117,7 @@
             },
             "columns": [
                 {mdata: "id", data: "id"},
-                {mdata: "controller", data: "controller"},
+                {mdata: "permission", data: "permission"},
                 {mdata: "method", data: "method"},
                 {mdata: "created_on", data: "created_on"},
                 {mdata: "updated_on", data: "updated_on"},
@@ -137,13 +137,13 @@
         });
 
         $("#addPermission").click(function(){
-            controller = $("#controller").val();
+            permission = $("#name").val();
             method = $("#method").val();
             $.ajax({
                 url: "{% url 'permission' %}",
                 type: "POST",
                 data: {
-                    controller: controller,
+                    permission: permission,
                     method: method,
                     csrfmiddlewaretoken: "{{ csrf_token }}",
                 },
@@ -153,9 +153,6 @@
                     $("#permission")[0].reset();
                     $("#permissionPopup").modal('hide');
                 },
-                error: function(jqXHR, textStatus, errorThrown){
-                    console.log(e);
-                }
             });
         }); 
 
@@ -169,7 +166,7 @@
                 },
                 success: function(data, status, xhr)
                 {
-                    $('#controller').val(data.controller);
+                    $('#name').val(data.permission);
                     $('#method').val(data.method);
                     $("#permissionPopup").modal('show');
                     $(".modal-title").replaceWith("<h2>Edit Permission</h2>");
@@ -180,14 +177,14 @@
         });
 
         $("#updatePermission").click(function(){
-            controller = $("#controller").val();
+            permission = $("#name").val();
             method = $("#method").val();
             $.ajax({
                 url: "{% url 'editpermission' %}",
                 type: "POST",
                 data: {
-                    role_id: id,
-                    role: role,
+                    permission_id: id,
+                    permission: permission,
                     method: method,
                     csrfmiddlewaretoken: "{{ csrf_token }}",
                 },

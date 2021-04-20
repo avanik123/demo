@@ -283,7 +283,7 @@ class DeleteProduct(View):
 
 class RoleDatatableView(DatatablesServerSideView):
 	model = Role
-	columns = ['id', 'role', 'created_on', 'updated_on']
+	columns = ['id', 'role', 'permission', 'created_on', 'updated_on']
 	searchable_columns = ['role']
 
 	def get_initial_queryset(self):
@@ -292,28 +292,32 @@ class RoleDatatableView(DatatablesServerSideView):
 
 
 class RoleTemplate(generic.TemplateView):
-    template_name = 'roll.html'
-    model = Role
+    template_name = 'role.html'
+    model = Role, Permission
 
     def get_context_data(self, **kwargs):
         context = super(RoleTemplate, self).get_context_data(**kwargs)
-        context['rolls'] = Role.objects.all()
+        context['roles'] = Role.objects.all()
+        context['permissions'] = Permission.objects.all()
         return context
 
     def post(self, request, *args, **kwargs):
         role = self.request.POST.get('role')
+        permission = self.request.POST.getlist('permission[]')
+        convertList = ', '.join(map(str,permission))
         try:
             r = Role()
             r.role = role
+            r.permission = convertList
             r.save()
             message = "roll added successfully"
             return JsonResponse({'success': True, 'msg':message})
-        except ValidationError as e:
+        except Exception as e:
             return JsonResponse({'success': False, 'msg':str(e)})
 
 
 class EditRole(generic.TemplateView):
-    template_name = 'roll.html'
+    template_name = 'role.html'
     model = Role
 
     def get(self, request, *args, **kwargs):
@@ -325,13 +329,17 @@ class EditRole(generic.TemplateView):
     def post(self, request, *args, **kwargs):
         role_id = request.POST.get('role_id')
         role = request.POST.get('role')
+        permission = request.POST.getlist('permission[]')
+        convertList = ', '.join(map(str,permission))
+        print(convertList)
         try:
             r = Role.objects.get(id=role_id)
             r.role = role
+            r.permission = convertList
             r.save()
             message = "Roll details successfully updated"
             return JsonResponse({'success': True, 'msg':message})
-        except ValidationError as e:
+        except Exception as e:
             return JsonResponse({'success': False, 'msg':str(e)})
 
 
@@ -343,9 +351,9 @@ class DeleteRole(View):
 
 
 class PermissionDatatableView(DatatablesServerSideView):
-	model = Role
-	columns = ['id', 'controller', 'method', 'created_on', 'updated_on']
-	searchable_columns = ['method']
+	model = Permission
+	columns = ['id', 'permission', 'method', 'created_on', 'updated_on']
+	searchable_columns = ['permission']
 
 	def get_initial_queryset(self):
 		qs = super(PermissionDatatableView, self).get_initial_queryset().order_by('-id')
@@ -362,11 +370,11 @@ class PermissionTemplate(generic.TemplateView):
         return context
 
     def post(self, request, *args, **kwargs):
-        controller = self.request.POST.get('controller')
+        permission = self.request.POST.get('permission')
         method = self.request.POST.get('method')
         try:
             p = Permission()
-            p.controller = controller
+            p.permission = permission
             p.method = method
             p.save()
             message = "permission added successfully"
@@ -382,21 +390,21 @@ class EditPermission(generic.TemplateView):
     def get(self, request, *args, **kwargs):
         permission_id = self.request.GET.get('permission_id')
         pdata = Permission.objects.filter(id=permission_id)
-        permission_list = serializers.serialize('json', rdata)
+        permission_list = serializers.serialize('json', pdata)
         return JsonResponse(json.loads(permission_list)[0]['fields'])
 
     def post(self, request, *args, **kwargs):
         permission_id = request.POST.get('permission_id')
-        controller = request.POST.get('controller')
-        method = request.POST.get('methood')
+        permission = request.POST.get('permission')
+        method = request.POST.get('method')
         try:
             p = Permission.objects.get(id=permission_id)
-            p.controller = controller
+            p.permission = permission
             p.method = method
             p.save()
             message = "Permission details successfully updated"
             return JsonResponse({'success': True, 'msg':message})
-        except ValidationError as e:
+        except Exception as e:
             return JsonResponse({'success': False, 'msg':str(e)})
 
 

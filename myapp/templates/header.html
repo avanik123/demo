@@ -19,6 +19,9 @@
   <link rel="stylesheet" href="{% static 'plugins/datatables-buttons/css/buttons.bootstrap4.min.css' %}">
   <!-- Theme style -->
   <link rel="stylesheet" href="{% static 'dist/css/adminlte.min.css' %}">
+   <!-- Select2 -->
+   <link rel="stylesheet" href="{% static 'plugins/select2/css/select2.min.css' %}">
+   <link rel="stylesheet" href="{% static 'plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css' %}">
 </head>
 <body class="hold-transition sidebar-mini">
 <div class="wrapper">
@@ -75,10 +78,10 @@
       <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false"> 
       
         <li class="nav-item">
-          <a href="{% url 'product' %}" class="nav-link">
+          <a href="{% url 'permission' %}" class="nav-link">
             <i class="nav-icon fas fa-boxes" aria-hidden="true"></i>
             <p>
-              Product
+              Permission
             </p>
           </a>
         </li>
@@ -89,14 +92,6 @@
             <p>
               Roles
             </p>
-          </a>
-        </li>
-
-        <li class="nav-header">MISCELLANEOUS</li>
-        <li class="nav-item">
-          <a href="https://adminlte.io/docs/3.0" class="nav-link">
-            <i class="nav-icon fas fa-file"></i>
-            <p>Documentation</p>
           </a>
         </li>
 

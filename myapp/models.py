@@ -19,14 +19,18 @@ class Product(models.Model):
 
 
 class Permission(models.Model):
-    controller = models.CharField(max_length=200)
+    permission = models.CharField(max_length=200)
     method = models.CharField(max_length=200, null=True, blank=True)
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now= True)
 
+    def __str__(self):
+        return self.permission
+
 
 class Role(models.Model):
     role = models.CharField(max_length=200, unique=True)
+    permission = models.CharField(max_length=200)
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now= True)
 
