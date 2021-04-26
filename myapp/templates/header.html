@@ -13,15 +13,23 @@
   <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet">
   <!-- Font Awesome -->
   <link rel="stylesheet" href="{% static 'plugins/fontawesome-free/css/all.min.css' %}">
+  <!-- iCheck for checkboxes and radio inputs -->
+  <link rel="stylesheet" href="{% static 'plugins/icheck-bootstrap/icheck-bootstrap.min.css' %}">
   <!-- DataTables -->
   <link rel="stylesheet" href="{% static 'plugins/datatables-bs4/css/dataTables.bootstrap4.min.css' %}">
   <link rel="stylesheet" href="{% static 'plugins/datatables-responsive/css/responsive.bootstrap4.min.css' %}">
   <link rel="stylesheet" href="{% static 'plugins/datatables-buttons/css/buttons.bootstrap4.min.css' %}">
   <!-- Theme style -->
   <link rel="stylesheet" href="{% static 'dist/css/adminlte.min.css' %}">
-   <!-- Select2 -->
-   <link rel="stylesheet" href="{% static 'plugins/select2/css/select2.min.css' %}">
-   <link rel="stylesheet" href="{% static 'plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css' %}">
+  <!-- Select2 -->
+  <link rel="stylesheet" href="{% static 'plugins/select2/css/select2.min.css' %}">
+  <link rel="stylesheet" href="{% static 'plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css' %}">
+  <!-- switch -->
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <!-- SweetAlert2 -->
+  <link rel="stylesheet" href="{% static 'plugins/sweetalert2-theme-bootstrap-4/bootstrap-4.min.css' %}">
+  <!-- Toastr -->
+  <link rel="stylesheet" href="{% static 'plugins/toastr/toastr.min.css' %}">
 </head>
 <body class="hold-transition sidebar-mini">
 <div class="wrapper">
@@ -78,8 +86,17 @@
       <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false"> 
       
         <li class="nav-item">
+          <a href="{% url 'user' %}" class="nav-link">
+            <i class="nav-icon fas fa-users" aria-hidden="true"></i>
+            <p>
+              Users
+            </p>
+          </a>
+        </li>
+
+        <li class="nav-item">
           <a href="{% url 'permission' %}" class="nav-link">
-            <i class="nav-icon fas fa-boxes" aria-hidden="true"></i>
+            <i class="nav-icon fas fa-user-check" aria-hidden="true"></i>
             <p>
               Permission
             </p>

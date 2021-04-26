@@ -21,7 +21,7 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h1 class="card-title">Roles</h1>
+                                <h1 class="card-title">Role List</h1>
                                 <button type="button" class="btn btn-primary addRole" style="float: right;">Add Role</i></button>
                             </div>
                             <!-- /.card-header -->
@@ -31,7 +31,6 @@
                                 <tr>
                                     <th>Id</th>
                                     <th>Role</th>
-                                    <th>Permission</th>
                                     <th>Created_on</th>
                                     <th>Updated_on</th>
                                     <th>Action</th>
@@ -42,7 +41,6 @@
                                 <tr>
                                     <th>Id</th>
                                     <th>Role</th>
-                                    <th>Permission</th>
                                     <th>Created_on</th>
                                     <th>Updated_on</th>
                                     <th>Action</th>
@@ -90,7 +88,7 @@
                                 <div class="col-sm-12">  
                                     <select class="js-example-basic-multiple" id="permission" name="permission[]" multiple="multiple">
                                         {% for permission in permissions %}
-                                            <option value="{{ permission.permission }}">{{ permission.permission }} {{ permission.method }}</option>
+                                            <option value="{{ permission.id }}">{{ permission.permission }} {{ permission.method }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>  
@@ -122,23 +120,26 @@
             "columns": [
                 {mdata: "id", data: "id"},
                 {mdata: "role", data: "role"},
-                {mdata: "permission", data: "permission"},
                 {mdata: "created_on", data: "created_on"},
                 {mdata: "updated_on", data: "updated_on"},
+                {mdata: "id", data: "id"},
+            ],
+            "columnDefs": [
                 {
-                    mData: null,
-                    bSortable: false,
-                    mRender: function ({id})
-                    { 
-                        return `<button type="button" class="btn btn-primary" id="editRole" data-id="${id}"><i class="fas fa-pen"></i></button> 
-                        <button type="button" class="btn btn-danger" id="deleteRole" data-id="${id}"><i class="fas fa-trash"></i></button>
-                        <a type="button" class="btn btn-success" data-id="${id}" href="{% url 'permission' %}">Permission</a>`;
+                    targets: 4,
+                    render: function (data, type, full, meta) {
+                        return `<button type="button" class="btn btn-primary" id="editRole" data-id="${full.id}"><i class="fas fa-pen"></i></button> 
+                        <button type="button" class="btn btn-danger" id="deleteRole" data-id="${full.id}"><i class="fas fa-trash"></i></button>
+                        <a type="button" class="btn btn-success" data-id="${full.id}" href="${full.id}/assignpermission/">Permission</a>`;
                     }
-                },
+                }
             ]
         });
         
-        $("#permission").select2();
+        $("#permission").select2({
+            placeholder: "Select a permissions",
+            allowClear: true
+        });
 
         $("body").on('click', '.addRole', function(){
             $("#rolePopup").modal('show');

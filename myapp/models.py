@@ -3,7 +3,9 @@ from django.contrib.auth.models import AbstractUser
 
 # Create your models here.
 class User(AbstractUser): 
+    username = models.CharField(max_length=254, null=False, unique=True)
     email = models.EmailField(max_length=254, null=False, unique=True)
+    role = models.CharField(max_length=254, null=False)
 
     def __str__(self):
         return self.email
@@ -30,7 +32,6 @@ class Permission(models.Model):
 
 class Role(models.Model):
     role = models.CharField(max_length=200, unique=True)
-    permission = models.CharField(max_length=200)
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now= True)
 
@@ -38,4 +39,11 @@ class Role(models.Model):
         return self.role
 
 
-
+class RolePermission(models.Model):
+    role_id = models.ForeignKey(Role, on_delete=models.CASCADE)
+    permission_id = models.ForeignKey(Permission, on_delete=models.CASCADE)
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now= True)
+    
+    # def __str__(self):
+    #     return self.role_id

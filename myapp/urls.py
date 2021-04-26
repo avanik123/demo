@@ -6,6 +6,11 @@ urlpatterns = [
     url(r'^$', views.LoginTemplate.as_view(), name='login'),
     path('index', views.HomeTemplate.as_view(), name='index'),
 
+    path('listuser', views.UserDatatableView.as_view(), name='listuser'),
+    path('user', views.UserTemplate.as_view(), name='user'),
+    path('edituser', views.EditUser.as_view(), name='edituser'),
+    path('deleteuser', views.DeleteUser.as_view(), name='deleteuser'),
+
     path('listproduct', views.ProductDatatableView.as_view(), name='listproduct'),
     path('product', views.ProductTemplate.as_view(), name='product'),
     path('editproduct', views.EditProduct.as_view(), name='editproduct'),
@@ -20,5 +25,9 @@ urlpatterns = [
     path('permission', views.PermissionTemplate.as_view(), name='permission'),
     path('editpermission', views.EditPermission.as_view(), name='editpermission'),
     path('deletepermission', views.DeletePermission.as_view(), name='deletepermission'),
+
+    path('listassignpermission', views.AssignPermissionDatatableView.as_view(), name='listassignpermission'),
+    path('<int:role_id>/assignpermission/', views.AssignPermissionTemplate.as_view(), name='assignpermission'),
+    path('editassignpermission', views.EditAssignPermission.as_view(), name='editassignpermission'),
 
 ]

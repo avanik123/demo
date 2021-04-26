@@ -21,7 +21,8 @@
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h1 class="card-title">Permission List</h1>
+                                <h1 class="card-title">{{ role_list }} Permissions List</h1>
+                               
                                 <button type="button" class="btn btn-primary addPermission" style="float: right;">Add Permission</i></button>
                             </div>
                             <!-- /.card-header -->
@@ -30,22 +31,22 @@
                                 <thead>
                                 <tr>
                                     <th>Id</th>
+                                    <th>Assign</th>
                                     <th>Permission</th>
                                     <th>Method</th>
                                     <th>Created_on</th>
                                     <th>Updated_on</th>
-                                    <th>Action</th>
                                 </tr>
                                 </thead>
                                 
                                 <tfoot>
                                 <tr>
                                     <th>Id</th>
+                                    <th>Assign</th>
                                     <th>Permission</th>
                                     <th>Method</th>
                                     <th>Created_on</th>
                                     <th>Updated_on</th>
-                                    <th>Action</th>
                                 </tr>
                                 </tfoot>
                                 </table>
@@ -106,116 +107,49 @@
 {% include "footer.html" %}
 
 <script>
+    console.log(JSON.stringify("{{rolepermissions}}"));
     $(function () {
         $('#permission').DataTable({
             "processing": true,
             "serverSide": true,
             "ajax": {
-                url: "{% url 'listpermission' %}",
+                url: "{% url 'listassignpermission' %}",
                 type: "GET",
                 csrfmiddlewaretoken: "{{ csrf_token }}"
             },
             "columns": [
                 {mdata: "id", data: "id"},
+                {
+                    mData: null,
+                    bSortable: false,
+                    mRender: function ({id}) 
+                    { 
+                        return `<label class="switch"><input type="checkbox" id="assign" data-id="${id}"><span class="slider round"></span></label>`;
+                    }
+                },
                 {mdata: "permission", data: "permission"},
                 {mdata: "method", data: "method"},
                 {mdata: "created_on", data: "created_on"},
                 {mdata: "updated_on", data: "updated_on"},
-                {mdata: "id", data: "id"},
-            ],
-            "columnDefs": [
-                {
-                    targets: 5,
-                    render: function (data, type, full, meta) {
-                        return `<button type="button" class="btn btn-primary" id="editPermission" data-id="${full.id}"><i class="nav-icon fas fa-pen"></i></button> <button type="button" class="btn btn-danger" id="deletePermission" data-id="${full.id}"><i class="nav-icon fas fa-trash"></button>`;
-                    }
-                }
-            ],
+            ]
         });
         
-        $("body").on('click', '.addPermission', function(){
-            $("#permissionPopup").modal('show');
-        });
-
-        $("#addPermission").click(function(){
-            permission = $("#name").val();
-            method = $("#method").val();
-            $.ajax({
-                url: "{% url 'permission' %}",
-                type: "POST",
-                data: {
-                    permission: permission,
-                    method: method,
-                    csrfmiddlewaretoken: "{{ csrf_token }}",
-                },
-                success: function(data, status, xhr)
-                {
-                    $('#permission').DataTable().ajax.reload(null, false);
-                    $("#permission")[0].reset();
-                    $("#permissionPopup").modal('hide');
-                },
-            });
-        }); 
-
-        $("body").on('click', '#editPermission', function(){
+        $("body").on('click', '#assign', function(){
             id = $(this).attr('data-id');
+            const role_id = "{{ role_id }}";            
             $.ajax({
-                url: "{% url 'editpermission' %}",
-                type: 'GET',
+                url: "{% url 'editassignpermission' %}",
+                type: 'POST',
                 data: {
-                    'permission_id' : id,
-                },
-                success: function(data, status, xhr)
-                {
-                    $('#name').val(data.permission);
-                    $('#method').val(data.method);
-                    $("#permissionPopup").modal('show');
-                    $(".modal-title").replaceWith("<h2>Edit Permission</h2>");
-                    $("#updatePermission").show();
-                    $("#addPermission").hide();
-                },
-            });
-        });
-
-        $("#updatePermission").click(function(){
-            permission = $("#name").val();
-            method = $("#method").val();
-            $.ajax({
-                url: "{% url 'editpermission' %}",
-                type: "POST",
-                data: {
-                    permission_id: id,
-                    permission: permission,
-                    method: method,
-                    csrfmiddlewaretoken: "{{ csrf_token }}",
-                },
-                success: function(data, status, xhr)
-                {
-                    $('#permission').DataTable().ajax.reload( null, false );
-                    $("#permission")[0].reset();
-                    $("#permissionPopup").modal('hide');
-                },
-            });
-        });
-
-        $("body").on('click', '#deletePermission', function(){
-            id = $(this).attr('data-id');
-            var isconfirm = confirm('Are you sure you want to delete permission?');
-            if(isconfirm)
-            {
-                $.ajax({
-                url: "{% url 'deletepermission' %}",
-                type: 'GET',
-                data: {
+                    role_id : role_id,
                     permission_id : id,
-                    csrfmiddlewaretoken: "{{ csrf_token }}",
+                    csrfmiddlewaretoken: "{{ csrf_token }}"
                 },
                 success: function(data, status, xhr)
                 {
-                    $('#roles').DataTable().ajax.reload( null, false );
+                    // toastr.success('Successfully, add permision.')
                 },
-                });  
-            }
+            });
         });
     });
 </script>

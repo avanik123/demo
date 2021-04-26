@@ -8,6 +8,8 @@ from django.core import serializers
 import json
 from django.views.generic.base import View
 from .models import *
+from django.contrib.auth import *
+from django.contrib.auth.hashers import make_password
 
 from django.core.paginator import Paginator
 from django.core.serializers.json import DjangoJSONEncoder
@@ -167,7 +169,9 @@ class DatatablesServerSideView(View):
     def filter_queryset(self, search_value, qs):
         search_filters = Q()
         for col in self.searchable_columns:
+            print("=====", col)
             model_column = self._model_columns[col]
+            print("++++", model_column)
 
             if model_column.has_choices_available:
                 search_filters |=\
@@ -208,16 +212,85 @@ class LoginTemplate(generic.TemplateView):
 
 class HomeTemplate(generic.TemplateView):
     template_name = 'index.html'
-    model = User
 
-    def get(self, request):
-            user_login = request.session.get("user_login", False)
-            if user_login is True:
-                u = request.session["user_data"]
-                user = User.objects.get(email=u['email'])
-                return render(request, self.template_name, {'user': user})
-            else:
-                return HttpResponseRedirect('/')          
+
+class UserDatatableView(DatatablesServerSideView):
+	model = User
+	columns = ['id', 'username', 'email', 'role']
+	searchable_columns = ['username']
+    # orderable = ['id']
+
+	def get_initial_queryset(self):
+		qs = super(UserDatatableView, self).get_initial_queryset().order_by('-id')
+		return qs
+
+
+class UserTemplate(generic.TemplateView):
+    template_name = 'user.html'
+    model = User, Role
+
+    def get_context_data(self, **kwargs):
+        context = super(UserTemplate, self).get_context_data(**kwargs)
+        context['users'] = User.objects.all()
+        context['roles'] = Role.objects.all()
+        rdata = serializers.serialize('json', context['roles'])
+        role_list = json.loads(rdata)
+        print(role_list)
+        return context
+
+    def post(self, request, *args, **kwargs):
+        name = self.request.POST.get('name')
+        email = self.request.POST.get('email')
+        role = self.request.POST.getlist('role[]')
+        convertList = ','.join(map(str,role))
+        password = self.request.POST.get('password')
+        try:
+            u = User()
+            u.username = name
+            u.email = email
+            u.role = convertList
+            u.password = make_password(password = password)
+            u.save()
+            message = "User added successfully"
+            return JsonResponse({'success': True, 'msg':message})
+        except Exception as e:
+            return JsonResponse({'success': False, 'msg':str(e)})
+
+
+class EditUser(generic.TemplateView):
+    template_name = 'user.html'
+    model = User, Role
+
+    def get(self, request, *args, **kwargs):
+        user_id = self.request.GET.get('user_id')
+        udata = User.objects.filter(id=user_id)
+        user_list = serializers.serialize('json', udata)
+        role_list = json.loads(user_list)[0]['fields']['role']
+        return JsonResponse(json.loads(user_list)[0]['fields'])
+
+    def post(self, request, *args, **kwargs):
+        user_id = request.POST.get('user_id')
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        role = request.POST.getlist('role[]')
+        convertList = ','.join(map(str,role))
+        try:
+            u = User.objects.get(id=user_id)
+            u.username = name
+            u.email = email
+            u.role = convertList
+            u.save()
+            message = "User edited successfully"
+            return JsonResponse({'success': True, 'msg':message})
+        except Exception as e:
+            return JsonResponse({'success': False, 'msg':str(e)})
+
+
+class DeleteUser(View):
+    def get(self, request, *args, **kwargs):
+        user_id = self.request.GET.get('user_id')
+        User.objects.filter(id=user_id).delete()
+        return JsonResponse({'success': True})
 
 
 class ProductDatatableView(DatatablesServerSideView):
@@ -248,7 +321,7 @@ class ProductTemplate(generic.TemplateView):
             message = "Product added successfully"
             return JsonResponse({'success': True, 'msg':message})
         except Exception as e:
-            return JsonResponse({'success': False})
+            return JsonResponse({'success': False, 'msg':str(e)})
 
 
 class EditProduct(generic.TemplateView):
@@ -283,7 +356,7 @@ class DeleteProduct(View):
 
 class RoleDatatableView(DatatablesServerSideView):
 	model = Role
-	columns = ['id', 'role', 'permission', 'created_on', 'updated_on']
+	columns = ['id', 'role', 'created_on', 'updated_on']
 	searchable_columns = ['role']
 
 	def get_initial_queryset(self):
@@ -304,7 +377,7 @@ class RoleTemplate(generic.TemplateView):
     def post(self, request, *args, **kwargs):
         role = self.request.POST.get('role')
         permission = self.request.POST.getlist('permission[]')
-        convertList = ', '.join(map(str,permission))
+        convertList = ','.join(map(str,permission))
         try:
             r = Role()
             r.role = role
@@ -330,8 +403,7 @@ class EditRole(generic.TemplateView):
         role_id = request.POST.get('role_id')
         role = request.POST.get('role')
         permission = request.POST.getlist('permission[]')
-        convertList = ', '.join(map(str,permission))
-        print(convertList)
+        convertList = ','.join(map(str,permission))
         try:
             r = Role.objects.get(id=role_id)
             r.role = role
@@ -413,3 +485,62 @@ class DeletePermission(View):
         permission_id = self.request.GET.get('permission_id')
         Permission.objects.filter(id=permission_id).delete()
         return JsonResponse({'success': True})
+
+
+class AssignPermissionDatatableView(DatatablesServerSideView):
+	model = Permission
+	columns = ['id', 'permission', 'method', 'created_on', 'updated_on']
+	searchable_columns = ['permission']
+
+	def get_initial_queryset(self):
+		qs = super(AssignPermissionDatatableView, self).get_initial_queryset().order_by('-id')
+		return qs
+
+
+class AssignPermissionTemplate(generic.TemplateView):
+    template_name = 'assign_permission.html'
+    model = Permission, Role, RolePermission
+
+    def get_context_data(self, role_id, **kwargs):
+        context = super(AssignPermissionTemplate, self).get_context_data(**kwargs)
+        context['permissions'] = Permission.objects.all()
+        context['roles'] = Role.objects.all()
+        rpdata = serializers.serialize('json', RolePermission.objects.all(), fields=["role_id", "permission_id"])
+        for i in range(0,3):
+            print(i)
+            rolepermissions_list = json.loads(rpdata)[i]['fields']
+            context['rolepermissions'] = rolepermissions_list
+            print(rolepermissions_list)
+
+        pdata = Role.objects.filter(id=role_id)
+        permission_list = serializers.serialize('json', pdata)
+        role = json.loads(permission_list)[0]['fields']['role']
+        context['role_list'] = role
+        role_id = json.loads(permission_list)[0]['pk']
+        context['role_id'] = role_id
+        return context
+
+
+class EditAssignPermission(generic.TemplateView):
+    template_name = 'assign_permission.html'
+    model = Permission, Role
+
+    def get(self, request, *args, **kwargs,):
+        role_id = self.request.GET.get('role_id')
+        permission_id = self.request.GET.get('permission_id')
+        pdata = Permission.objects.filter(id=permission_id)
+        permission_list = serializers.serialize('json', pdata)
+        return JsonResponse(json.loads(permission_list)[0]['fields'])
+
+    def post(self, request, *args, **kwargs):
+        role_id = self.request.POST.get('role_id')
+        permission_id = self.request.POST.get('permission_id')
+        try:
+            rp = RolePermission()
+            rp.role_id_id = role_id
+            rp.permission_id_id = permission_id
+            rp.save()
+            message = "Permission details successfully updated"
+            return JsonResponse({'success': True, 'msg':message})
+        except Exception as e:
+            return JsonResponse({'success': False, 'msg':str(e)})
