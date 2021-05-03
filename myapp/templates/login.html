@@ -92,7 +92,9 @@
         },
         success: function(data, status, xhr)
         {
+          console.log(data);
           $("#loginform")[0].reset();
+          // location.reload("http://127.0.0.1:8000/index/")
         },
       });
     }); 
