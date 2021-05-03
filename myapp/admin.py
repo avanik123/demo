@@ -7,4 +7,4 @@ admin.site.register(Product)
 admin.site.register(Permission)
 admin.site.register(Role)
 admin.site.register(RolePermission)
-
+admin.site.register(UserRole)

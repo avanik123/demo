@@ -31,8 +31,8 @@
                                 <tr>
                                     <th>Id</th>
                                     <th>Role</th>
-                                    <th>Created_on</th>
-                                    <th>Updated_on</th>
+                                    <th>Created on</th>
+                                    <th>Updated on</th>
                                     <th>Action</th>
                                 </tr>
                                 </thead>
@@ -41,8 +41,8 @@
                                 <tr>
                                     <th>Id</th>
                                     <th>Role</th>
-                                    <th>Created_on</th>
-                                    <th>Updated_on</th>
+                                    <th>Created on</th>
+                                    <th>Updated on</th>
                                     <th>Action</th>
                                 </tr>
                                 </tfoot>
@@ -219,7 +219,7 @@
                 url: "{% url 'deleterole' %}",
                 type: 'GET',
                 data: {
-                    roll_id : id,
+                    role_id : id,
                     csrfmiddlewaretoken: "{{ csrf_token }}",
                 },
                 success: function(data, status, xhr)

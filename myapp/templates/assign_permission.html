@@ -31,22 +31,22 @@
                                 <thead>
                                 <tr>
                                     <th>Id</th>
-                                    <th>Assign</th>
+                                    <th>Status</th>
                                     <th>Permission</th>
                                     <th>Method</th>
-                                    <th>Created_on</th>
-                                    <th>Updated_on</th>
+                                    <th>Created on</th>
+                                    <th>Updated on</th>
                                 </tr>
                                 </thead>
                                 
                                 <tfoot>
                                 <tr>
                                     <th>Id</th>
-                                    <th>Assign</th>
+                                    <th>Status</th>
                                     <th>Permission</th>
                                     <th>Method</th>
-                                    <th>Created_on</th>
-                                    <th>Updated_on</th>
+                                    <th>Created on</th>
+                                    <th>Updated on</th>
                                 </tr>
                                 </tfoot>
                                 </table>
@@ -107,8 +107,8 @@
 {% include "footer.html" %}
 
 <script>
-    console.log(JSON.stringify("{{rolepermissions}}"));
     $(function () {
+        console.log("{{rolepermission|safe}}");
         $('#permission').DataTable({
             "processing": true,
             "serverSide": true,
@@ -142,12 +142,12 @@
                 type: 'POST',
                 data: {
                     role_id : role_id,
-                    permission_id : id,
+                    user_id : id,
                     csrfmiddlewaretoken: "{{ csrf_token }}"
                 },
                 success: function(data, status, xhr)
                 {
-                    // toastr.success('Successfully, add permision.')
+                    toastr.success('Permission, Status change successfully.')
                 },
             });
         });

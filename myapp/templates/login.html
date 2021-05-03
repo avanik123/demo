@@ -78,7 +78,8 @@
 
 <script>
   $(function () {
-    $("#loginbtn").click(function(){
+    $("#loginbtn").click(function(event){
+      event.preventDefault()
       email = $("#email").val();
       password = $("#password").val();
       $.ajax({

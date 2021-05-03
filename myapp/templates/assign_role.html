@@ -1,0 +1,207 @@
+{% include "header.html" %}
+
+{% block content %}
+  <!-- Content Wrapper. Contains page content -->
+  <div class="content-wrapper">
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <div class="container-fluid">
+        <div class="row mb-2">
+          <div class="col-sm-6">
+            <h1>User</h1>
+          </div>
+        </div>
+      </div><!-- /.container-fluid -->
+    </section>
+    
+    <!-- Main content -->
+    <section class="content">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <h1 class="card-title">User List</h1>
+                <button type="button" class="btn btn-primary addUser" style="float: right;">Add User</i></button>
+                <!-- <select class="custom-select" style="width:150px; float: right;">
+                    {% for role in roles %}
+                        <option value="{{ role.id }}">{{ role.role }}</option>
+                    {% endfor %}
+                </select>
+                <input type = "submit" value = "Submit" style="float: right;"> -->
+              </div>
+              
+              <!-- /.card-header -->
+              <div class="card-body">
+                <table id="users" class="table table-bordered table-striped">
+                  <thead>
+                  <tr>
+                    <th>Id</th>
+                    <th>Status</th>
+                    <th>Name</th>
+                    <th>Created on</th>
+                    <th>Updated on</th>
+                  </tr>
+                  </thead>
+                  
+                  <tfoot>
+                  <tr>
+                    <th>Id</th>
+                    <th>Status</th>
+                    <th>Name</th>
+                    <th>Created on</th>
+                    <th>Updated on</th>
+                  </tr>
+                  </tfoot>
+                </table>
+            </div>
+              <!-- /.card-body -->
+            </div>
+            <!-- /.card -->
+          </div>
+          <!-- /.col -->
+        </div>
+        <!-- /.row -->
+      </div>
+      <!-- /.container-fluid -->
+    </section>
+    <!-- /.content -->
+  </div>
+  <!-- /.content-wrapper -->
+
+  <div class="modal" id="userPopup" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Add User</h2>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form action="" id="user" method="POST">{% csrf_token %}
+            <div id="alertdiv" class="alert" style="display:none;">
+              <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+              <p></p>
+            </div>
+            <div class="form-group">  
+              <label class="col-sm-2 col-form-label">Name: </label> 
+                <div class="col-sm-12">  
+                  <input type="text" class="form-control" id="name" placeholder="Enter name" value="" required>
+                </div>  
+            </div> 
+            <div class="form-group">  
+              <label class="col-sm-2 col-form-label">Email: </label> 
+                <div class="col-sm-12">  
+                  <input type="text" class="form-control" id="email" placeholder="Enter email" value="" required>
+                </div>  
+            </div> 
+            <!-- <div class="form-group">  
+                <label class="col-sm-2 col-form-label">Role: </label> 
+                    <div class="col-sm-12">  
+                        <select class="js-example-basic-multiple" id="role" name="role[]" multiple="multiple">
+                            {% for role in roles %}
+                                <option value="{{ role.id }}">{{ role.role }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>  
+            </div>  -->
+            <div class="form-group">  
+                <label class="col-sm-2 col-form-label" id="passlabel" style="display:none;">Password: </label> 
+                  <div class="col-sm-12">  
+                    <input type="passsword" class="form-control" id="password" placeholder="Enter password" value="" style="display:none;">
+                  </div>  
+            </div> 
+          </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary" id="addUser">Submit</button>
+            <button class="btn btn-primary" type="button" id="updateUser" style="display:none;">Update</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% include "footer.html" %}
+
+<script>
+    $(function () {
+        console.log("{{ user_list }}");
+        $('#users').DataTable({
+            "processing": true,
+            "serverSide": true,
+            "ajax": {
+                url: "{% url 'listassignrole' %}",
+                type: "GET",
+                csrfmiddlewaretoken: "{{ csrf_token }}"
+            },
+            "columns": [
+                {mdata: "id", data: "id"},
+                {
+                    mData: null,
+                    bSortable: false,
+                    mRender: function ({id}) 
+                    { 
+                        return `<label class="switch"><input type="checkbox" id="assign" data-id="${id}"><span class="slider round"></span></label>`;
+                    }
+                },
+                {mdata: "role", data: "role"},
+                {mdata: "created_on", data: "created_on"},
+                {mdata: "updated_on", data: "updated_on"},
+            ]
+        });
+
+        $("#role").select2({
+            placeholder: "Select a roles",
+            allowClear: true
+        });
+
+        $("body").on('click', '.addUser', function(){
+            $("#userPopup").modal('show');
+            $("#password").show();
+            $("#passlabel").show();
+        });
+
+        $("#addUser").click(function(){
+            name = $("#name").val();
+            email = $("#email").val();
+            password = $("#password").val();
+            $.ajax({
+                url: "{% url 'user' %}",
+                type: "POST",
+                data: {
+                    name: name,
+                    email: email,
+                    passowrd: password,
+                    csrfmiddlewaretoken: "{{ csrf_token }}",
+                },
+                success: function(data, status, xhr)
+                {
+                    $('#users').DataTable().ajax.reload( null, false );
+                    $("#user")[0].reset();
+                    $("#userPopup").modal('hide');
+                },
+            });
+        }); 
+
+        $("body").on('click', '#assign', function(){
+            id = $(this).attr('data-id');
+            const user_id = "{{ user_id }}";            
+            $.ajax({
+                url: "{% url 'editassignrole' %}",
+                type: 'POST',
+                data: {
+                    user_id : user_id,
+                    role_id : id,
+                    csrfmiddlewaretoken: "{{ csrf_token }}"
+                },
+                success: function(data, status, xhr)
+                {
+                    toastr.success('Permission, Status change successfully.')
+                },
+            });
+        });
+    });
+</script>

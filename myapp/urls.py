@@ -4,12 +4,16 @@ from . import views
 
 urlpatterns = [
     url(r'^$', views.LoginTemplate.as_view(), name='login'),
-    path('index', views.HomeTemplate.as_view(), name='index'),
+    path('index/', views.HomeTemplate.as_view(), name='index'),
 
     path('listuser', views.UserDatatableView.as_view(), name='listuser'),
     path('user', views.UserTemplate.as_view(), name='user'),
     path('edituser', views.EditUser.as_view(), name='edituser'),
     path('deleteuser', views.DeleteUser.as_view(), name='deleteuser'),
+
+    path('listassignrole', views.AssignRoleDatatableView.as_view(), name='listassignrole'),
+    path('<int:user_id>/assignrole/', views.AssignRoleTemplate.as_view(), name='assignrole'),
+    path('editassignrole', views.EditAssignRole.as_view(), name='editassignrole'),
 
     path('listproduct', views.ProductDatatableView.as_view(), name='listproduct'),
     path('product', views.ProductTemplate.as_view(), name='product'),

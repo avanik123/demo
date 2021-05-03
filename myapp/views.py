@@ -10,6 +10,7 @@ from django.views.generic.base import View
 from .models import *
 from django.contrib.auth import *
 from django.contrib.auth.hashers import make_password
+from django.db import connection
 
 from django.core.paginator import Paginator
 from django.core.serializers.json import DjangoJSONEncoder
@@ -186,6 +187,15 @@ class DatatablesServerSideView(View):
         return qs.filter(search_filters)
 
 
+def dictfetchall(cursor):
+    "Returns all rows from a cursor as a dict"
+    desc = cursor.description
+    return [
+        dict(zip([col[0] for col in desc], row))
+        for row in cursor.fetchall()
+    ]
+
+    
 class LoginTemplate(generic.TemplateView):
     template_name = 'login.html'
     model = User
@@ -199,24 +209,32 @@ class LoginTemplate(generic.TemplateView):
             if u.check_password(password) is True:
                 request.session['user_login'] = True
                 udata = {'id':u.id, 'email':u.email, 'password':u.password }
-                print(udata)
                 request.session['user_data'] = udata
-                return HttpResponseRedirect('/index')
+                return HttpResponseRedirect('/index/')
             else:
                 return render(request, self.template_name, {'msg': message})
-        except Exception:
-            print(e)
+        except Exception as e:
             message = "Invalid email"
             return render(request, self.template_name, {'msg': message})
 
 
 class HomeTemplate(generic.TemplateView):
     template_name = 'index.html'
+    model = User
+    
+    def get(self, request):
+        user_login = request.session.get("user_login", False)
+        if user_login is True:
+            u = request.session["user_data"]
+            user = User.objects.get(email=u['email'])
+            return render(request, self.template_name, {'user': user})
+        else:
+            return HttpResponseRedirect('/')
 
 
 class UserDatatableView(DatatablesServerSideView):
 	model = User
-	columns = ['id', 'username', 'email', 'role']
+	columns = ['id', 'username', 'email']
 	searchable_columns = ['username']
     # orderable = ['id']
 
@@ -232,23 +250,20 @@ class UserTemplate(generic.TemplateView):
     def get_context_data(self, **kwargs):
         context = super(UserTemplate, self).get_context_data(**kwargs)
         context['users'] = User.objects.all()
-        context['roles'] = Role.objects.all()
-        rdata = serializers.serialize('json', context['roles'])
-        role_list = json.loads(rdata)
-        print(role_list)
+        # context['roles'] = Role.objects.all()
         return context
 
     def post(self, request, *args, **kwargs):
         name = self.request.POST.get('name')
         email = self.request.POST.get('email')
-        role = self.request.POST.getlist('role[]')
-        convertList = ','.join(map(str,role))
+        # role = self.request.POST.getlist('role[]')
+        # convertList = ','.join(map(str,role))
         password = self.request.POST.get('password')
         try:
             u = User()
             u.username = name
             u.email = email
-            u.role = convertList
+            # u.role = convertList
             u.password = make_password(password = password)
             u.save()
             message = "User added successfully"
@@ -265,20 +280,20 @@ class EditUser(generic.TemplateView):
         user_id = self.request.GET.get('user_id')
         udata = User.objects.filter(id=user_id)
         user_list = serializers.serialize('json', udata)
-        role_list = json.loads(user_list)[0]['fields']['role']
+        # role_list = json.loads(user_list)[0]['fields']['role']
         return JsonResponse(json.loads(user_list)[0]['fields'])
 
     def post(self, request, *args, **kwargs):
         user_id = request.POST.get('user_id')
         name = request.POST.get('name')
         email = request.POST.get('email')
-        role = request.POST.getlist('role[]')
-        convertList = ','.join(map(str,role))
+        # role = request.POST.getlist('role[]')
+        # convertList = ','.join(map(str,role))
         try:
             u = User.objects.get(id=user_id)
             u.username = name
             u.email = email
-            u.role = convertList
+            # u.role = convertList
             u.save()
             message = "User edited successfully"
             return JsonResponse({'success': True, 'msg':message})
@@ -291,6 +306,56 @@ class DeleteUser(View):
         user_id = self.request.GET.get('user_id')
         User.objects.filter(id=user_id).delete()
         return JsonResponse({'success': True})
+
+
+class AssignRoleDatatableView(DatatablesServerSideView):
+	model = Role
+	columns = ['id', 'role', 'created_on', 'updated_on']
+	searchable_columns = ['role']
+
+	def get_initial_queryset(self):
+		qs = super(AssignRoleDatatableView, self).get_initial_queryset().order_by('-id')
+		return qs
+
+
+class AssignRoleTemplate(generic.TemplateView):
+    template_name = 'assign_role.html'
+    model = User, Role, UserRole
+
+    def get_context_data(self, user_id, **kwargs):
+        context = super(AssignRoleTemplate, self).get_context_data(**kwargs)
+        context['users'] = User.objects.all()
+        context['roles'] = Role.objects.all()
+        udata = User.objects.filter(id=user_id)
+        user_list = serializers.serialize('json', udata)
+        user_id = json.loads(user_list)[0]['pk']
+        context['user_id'] = user_id
+        return context
+
+
+class EditAssignRole(generic.TemplateView):
+    template_name = 'assign_role.html'
+    model = User, Role
+
+    def get(self, request, *args, **kwargs,):
+        role_id = self.request.GET.get('role_id')
+        user_id = self.request.GET.get('user_id')
+        udata = User.objects.filter(id=user_id)
+        user_list = serializers.serialize('json', udata)
+        return JsonResponse(json.loads(user_list)[0]['fields'])
+
+    def post(self, request, *args, **kwargs):
+        role_id = self.request.POST.get('role_id')
+        user_id = self.request.POST.get('user_id')
+        try:
+            ur = UserRole()
+            ur.role_id_id = role_id
+            ur.user_id_id = user_id
+            ur.save()
+            message = "Role details successfully updated"
+            return JsonResponse({'success': True, 'msg':message})
+        except Exception as e:
+            return JsonResponse({'success': False, 'msg':str(e)})
 
 
 class ProductDatatableView(DatatablesServerSideView):
@@ -379,7 +444,7 @@ class RoleTemplate(generic.TemplateView):
         permission = self.request.POST.getlist('permission[]')
         convertList = ','.join(map(str,permission))
         try:
-            r = Role()
+            r = Role.object.create_in_bulk()
             r.role = role
             r.permission = convertList
             r.save()
@@ -503,19 +568,16 @@ class AssignPermissionTemplate(generic.TemplateView):
 
     def get_context_data(self, role_id, **kwargs):
         context = super(AssignPermissionTemplate, self).get_context_data(**kwargs)
-        context['permissions'] = Permission.objects.all()
         context['roles'] = Role.objects.all()
-        rpdata = serializers.serialize('json', RolePermission.objects.all(), fields=["role_id", "permission_id"])
-        for i in range(0,3):
-            print(i)
-            rolepermissions_list = json.loads(rpdata)[i]['fields']
-            context['rolepermissions'] = rolepermissions_list
-            print(rolepermissions_list)
+        qry = "SELECT myapp_RolePermission.permission_id_id FROM myapp_RolePermission LEFT JOIN myapp_Permission ON myapp_RolePermission.id=myapp_Permission.id"
+        cursor = connection.cursor()
+        cursor.execute(qry)
+        datas = dictfetchall(cursor)
+        print(type(datas))
+        context['rolepermission'] = datas
 
         pdata = Role.objects.filter(id=role_id)
         permission_list = serializers.serialize('json', pdata)
-        role = json.loads(permission_list)[0]['fields']['role']
-        context['role_list'] = role
         role_id = json.loads(permission_list)[0]['pk']
         context['role_id'] = role_id
         return context

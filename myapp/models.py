@@ -5,7 +5,6 @@ from django.contrib.auth.models import AbstractUser
 class User(AbstractUser): 
     username = models.CharField(max_length=254, null=False, unique=True)
     email = models.EmailField(max_length=254, null=False, unique=True)
-    role = models.CharField(max_length=254, null=False)
 
     def __str__(self):
         return self.email
@@ -47,3 +46,10 @@ class RolePermission(models.Model):
     
     # def __str__(self):
     #     return self.role_id
+
+
+class UserRole(models.Model):
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    role_id = models.ForeignKey(Role, on_delete=models.CASCADE)
+    created_on = models.DateTimeField(auto_now_add=True)
+    updated_on = models.DateTimeField(auto_now= True)
