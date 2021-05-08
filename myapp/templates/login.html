@@ -24,8 +24,14 @@
   <div class="card">
     <div class="card-body login-card-body">
       <p class="login-box-msg">Sign in to start your session</p>
-
-      <form action="" id="loginform" method="get">{% csrf_token %}
+      
+        <div class="alert alert-danger" id="errorDiv" style="display:none;">
+          <strong id="errorText"> </strong>
+        </div>
+      
+      <form id="loginform" method="post">
+        {% csrf_token %}
+        
         <div class="input-group mb-3">
           <input type="email" id="email" class="form-control" placeholder="Email">
           <div class="input-group-append">
@@ -78,8 +84,8 @@
 
 <script>
   $(function () {
-    $("#loginbtn").click(function(event){
-      event.preventDefault()
+    $('#loginform').submit(function(event){
+      event.preventDefault();
       email = $("#email").val();
       password = $("#password").val();
       $.ajax({
@@ -90,12 +96,24 @@
           password: password,
           csrfmiddlewaretoken: "{{ csrf_token }}",
         },
+        beforeSend:function(data){
+          $('#loginbtn').text("Loading...");
+        },
         success: function(data, status, xhr)
         {
           console.log(data);
           $("#loginform")[0].reset();
-          // location.reload("http://127.0.0.1:8000/index/")
+          window.location.href = "http://127.0.0.1:8000/index/";
         },
+        error: function(data, status, xhr)
+        {
+          $("#errorDiv").attr("style","display:block");
+          $('#errorText').html("Invalid email or password");
+        },
+        complete:function(data){
+          $('#loginbtn').text("Sign In");
+          $(this).find(':input[type=submit]').prop('disabled', false);
+        }
       });
     }); 
   });

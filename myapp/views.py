@@ -196,28 +196,6 @@ def dictfetchall(cursor):
     ]
 
     
-class LoginTemplate(generic.TemplateView):
-    template_name = 'login.html'
-    model = User
-
-    def post(self, request, *args, **kwargs):
-        email = self.request.POST.get('email')
-        password = self.request.POST.get('password')
-        try:
-            u = User.objects.get(email=email)
-            message = "Invalid password"
-            if u.check_password(password) is True:
-                request.session['user_login'] = True
-                udata = {'id':u.id, 'email':u.email, 'password':u.password }
-                request.session['user_data'] = udata
-                return HttpResponseRedirect('/index/')
-            else:
-                return render(request, self.template_name, {'msg': message})
-        except Exception as e:
-            message = "Invalid email"
-            return render(request, self.template_name, {'msg': message})
-
-
 class HomeTemplate(generic.TemplateView):
     template_name = 'index.html'
     model = User
@@ -230,6 +208,38 @@ class HomeTemplate(generic.TemplateView):
             return render(request, self.template_name, {'user': user})
         else:
             return HttpResponseRedirect('/')
+
+
+class LoginTemplate(generic.TemplateView):
+    template_name = 'login.html'
+    model = User
+
+    # def get(self, request):
+    #     user_login = request.session.get("user_login", False)
+    #     if user_login is True:
+    #         return render(request, '/index/')
+
+    def post(self, request, *args, **kwargs):
+        email = self.request.POST.get('email')
+        password = self.request.POST.get('password')
+        try:
+            u = User.objects.get(email=email)
+            if u.check_password(password) is True:
+                request.session['user_login'] = True
+                udata = {'id':u.id, 'email':u.email, 'password':u.password, 'username':u.username}
+                request.session['user_data'] = udata
+                print(udata)
+                return HttpResponseRedirect('/index/')
+            else:
+                return render(request, self.template_name, status=401)
+        except Exception:
+            return render(request, self.template_name, status=401)
+
+
+def logout(request):
+    if request.session["user_login"]:
+        del request.session['user_login']
+    return HttpResponseRedirect('/')
 
 
 class UserDatatableView(DatatablesServerSideView):
@@ -573,8 +583,10 @@ class AssignPermissionTemplate(generic.TemplateView):
         cursor = connection.cursor()
         cursor.execute(qry)
         datas = dictfetchall(cursor)
-        print(type(datas))
-        context['rolepermission'] = datas
+        # print(type(datas))
+        abc = json.dumps(datas)
+        print(abc)
+        context['rolepermission'] = "hello world"
 
         pdata = Role.objects.filter(id=role_id)
         permission_list = serializers.serialize('json', pdata)

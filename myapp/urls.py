@@ -5,6 +5,7 @@ from . import views
 urlpatterns = [
     url(r'^$', views.LoginTemplate.as_view(), name='login'),
     path('index/', views.HomeTemplate.as_view(), name='index'),
+    url(r'^logout/$', views.logout, name='logout'),
 
     path('listuser', views.UserDatatableView.as_view(), name='listuser'),
     path('user', views.UserTemplate.as_view(), name='user'),
