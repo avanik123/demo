@@ -108,8 +108,9 @@
 
 <script>
     $(function () {
-        // abc = JSON.parse("{{rolepermission}}");
-        console.log("{{rolepermission}}");
+        var rolePermission = "{{rolepermission|safe}}";
+        rolePermission = JSON.parse(JSON.stringify(rolePermission));
+        console.log(rolePermission[0])
         $('#permission').DataTable({
             "processing": true,
             "serverSide": true,

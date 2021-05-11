@@ -88,6 +88,7 @@
       event.preventDefault();
       email = $("#email").val();
       password = $("#password").val();
+      console.log(email, password);
       $.ajax({
         url: "{% url 'login' %}",
         type: "POST",
@@ -101,7 +102,6 @@
         },
         success: function(data, status, xhr)
         {
-          console.log(data);
           $("#loginform")[0].reset();
           window.location.href = "http://127.0.0.1:8000/index/";
         },

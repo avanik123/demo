@@ -214,11 +214,6 @@ class LoginTemplate(generic.TemplateView):
     template_name = 'login.html'
     model = User
 
-    # def get(self, request):
-    #     user_login = request.session.get("user_login", False)
-    #     if user_login is True:
-    #         return render(request, '/index/')
-
     def post(self, request, *args, **kwargs):
         email = self.request.POST.get('email')
         password = self.request.POST.get('password')
@@ -583,10 +578,8 @@ class AssignPermissionTemplate(generic.TemplateView):
         cursor = connection.cursor()
         cursor.execute(qry)
         datas = dictfetchall(cursor)
-        # print(type(datas))
-        abc = json.dumps(datas)
-        print(abc)
-        context['rolepermission'] = "hello world"
+        print(datas)
+        context['rolepermission'] = datas
 
         pdata = Role.objects.filter(id=role_id)
         permission_list = serializers.serialize('json', pdata)
