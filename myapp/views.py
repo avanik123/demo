@@ -27,6 +27,7 @@ import json
 
 DATATABLES_SERVERSIDE_MAX_COLUMNS = 30
 
+
 class DatatablesServerSideView(View):
     columns = []
     searchable_columns = []
@@ -197,11 +198,11 @@ def dictfetchall(cursor):
         for row in cursor.fetchall()
     ]
 
-    
+
 class HomeTemplate(generic.TemplateView):
     template_name = 'index.html'
     model = User
-    
+
     def get(self, request):
         user_login = request.session.get("user_login", False)
         if user_login is True:
@@ -223,7 +224,8 @@ class LoginTemplate(generic.TemplateView):
             u = User.objects.get(email=email)
             if u.check_password(password) is True:
                 request.session['user_login'] = True
-                udata = {'id':u.id, 'email':u.email, 'password':u.password, 'username':u.username}
+                udata = {'id': u.id, 'email': u.email,
+                         'password': u.password, 'username': u.username}
                 request.session['user_data'] = udata
                 print(udata)
                 return HttpResponseRedirect('/index/')
@@ -240,14 +242,15 @@ def logout(request):
 
 
 class UserDatatableView(DatatablesServerSideView):
-	model = User
-	columns = ['id', 'username', 'email']
-	searchable_columns = ['username']
+    model = User
+    columns = ['id', 'username', 'email']
+    searchable_columns = ['username']
     # orderable = ['id']
 
-	def get_initial_queryset(self):
-		qs = super(UserDatatableView, self).get_initial_queryset().order_by('-id')
-		return qs
+    def get_initial_queryset(self):
+        qs = super(UserDatatableView,
+                   self).get_initial_queryset().order_by('-id')
+        return qs
 
 
 class UserTemplate(generic.TemplateView):
@@ -271,12 +274,12 @@ class UserTemplate(generic.TemplateView):
             u.username = name
             u.email = email
             # u.role = convertList
-            u.password = make_password(password = password)
+            u.password = make_password(password=password)
             u.save()
             message = "User added successfully"
-            return JsonResponse({'success': True, 'msg':message})
+            return JsonResponse({'success': True, 'msg': message})
         except Exception as e:
-            return JsonResponse({'success': False, 'msg':str(e)})
+            return JsonResponse({'success': False, 'msg': str(e)})
 
 
 class EditUser(generic.TemplateView):
@@ -303,9 +306,9 @@ class EditUser(generic.TemplateView):
             # u.role = convertList
             u.save()
             message = "User edited successfully"
-            return JsonResponse({'success': True, 'msg':message})
+            return JsonResponse({'success': True, 'msg': message})
         except Exception as e:
-            return JsonResponse({'success': False, 'msg':str(e)})
+            return JsonResponse({'success': False, 'msg': str(e)})
 
 
 class DeleteUser(View):
@@ -316,13 +319,14 @@ class DeleteUser(View):
 
 
 class AssignRoleDatatableView(DatatablesServerSideView):
-	model = Role
-	columns = ['id', 'role', 'created_on', 'updated_on']
-	searchable_columns = ['role']
+    model = Role
+    columns = ['id', 'role', 'created_on', 'updated_on']
+    searchable_columns = ['role']
 
-	def get_initial_queryset(self):
-		qs = super(AssignRoleDatatableView, self).get_initial_queryset().order_by('-id')
-		return qs
+    def get_initial_queryset(self):
+        qs = super(AssignRoleDatatableView,
+                   self).get_initial_queryset().order_by('-id')
+        return qs
 
 
 class AssignRoleTemplate(generic.TemplateView):
@@ -360,66 +364,10 @@ class EditAssignRole(generic.TemplateView):
             ur.user_id_id = user_id
             ur.save()
             message = "Role details successfully updated"
-            return JsonResponse({'success': True, 'msg':message})
+            return JsonResponse({'success': True, 'msg': message})
         except Exception as e:
-            return JsonResponse({'success': False, 'msg':str(e)})
+            return JsonResponse({'success': False, 'msg': str(e)})
 
-
-class ProductDatatableView(DatatablesServerSideView):
-	model = Product
-	columns = ['id', 'pro_name', 'created_on', 'updated_on']
-	searchable_columns = ['pro_name']
-
-	def get_initial_queryset(self):
-		qs = super(ProductDatatableView, self).get_initial_queryset().order_by('-id')
-		return qs
-
-
-class ProductTemplate(generic.TemplateView):
-    template_name = 'product.html'
-    model = Product
-
-    def get_context_data(self, **kwargs):
-        context = super(ProductTemplate, self).get_context_data(**kwargs)
-        context['products'] = Product.objects.all()
-        return context
-
-    def post(self, request, *args, **kwargs):
-        pname = self.request.POST.get('pname')
-        try:
-            p = Product()
-            p.pro_name = pname
-            p.save()
-            message = "Product added successfully"
-            return JsonResponse({'success': True, 'msg':message})
-        except Exception as e:
-            return JsonResponse({'success': False, 'msg':str(e)})
-
-
-class EditProduct(generic.TemplateView):
-    template_name = 'product.html'
-    model = Product
-
-    def get(self, request, *args, **kwargs):
-        product_id = self.request.GET.get('product_id')
-        pdata = Product.objects.filter(id=product_id)
-        product_list = serializers.serialize('json', pdata)
-        return JsonResponse(json.loads(product_list)[0]['fields'])
-
-    def post(self, request, *args, **kwargs):
-        product_id = request.POST.get('product_id')
-        pname = request.POST.get('pname')
-        try:
-            p = Product.objects.get(id=product_id)
-            p.pro_name = pname
-            p.save()
-            message = "Product details successfully updated"
-            return JsonResponse({'success': True, 'msg':message})
-        except ValidationError as e:
-            return JsonResponse({'success': False, 'msg':str(e)})
-
-
-class DeleteProduct(View):
     def get(self, request, *args, **kwargs):
         product_id = self.request.GET.get('product_id')
         Product.objects.filter(id=product_id).delete()
@@ -427,13 +375,14 @@ class DeleteProduct(View):
 
 
 class RoleDatatableView(DatatablesServerSideView):
-	model = Role
-	columns = ['id', 'role', 'created_on', 'updated_on']
-	searchable_columns = ['role']
+    model = Role
+    columns = ['id', 'role', 'created_on', 'updated_on']
+    searchable_columns = ['role']
 
-	def get_initial_queryset(self):
-		qs = super(RoleDatatableView, self).get_initial_queryset().order_by('-id')
-		return qs
+    def get_initial_queryset(self):
+        qs = super(RoleDatatableView,
+                   self).get_initial_queryset().order_by('-id')
+        return qs
 
 
 class RoleTemplate(generic.TemplateView):
@@ -449,16 +398,16 @@ class RoleTemplate(generic.TemplateView):
     def post(self, request, *args, **kwargs):
         role = self.request.POST.get('role')
         permission = self.request.POST.getlist('permission[]')
-        convertList = ','.join(map(str,permission))
+        convertList = ','.join(map(str, permission))
         try:
             r = Role.object.create_in_bulk()
             r.role = role
             r.permission = convertList
             r.save()
             message = "roll added successfully"
-            return JsonResponse({'success': True, 'msg':message})
+            return JsonResponse({'success': True, 'msg': message})
         except Exception as e:
-            return JsonResponse({'success': False, 'msg':str(e)})
+            return JsonResponse({'success': False, 'msg': str(e)})
 
 
 class EditRole(generic.TemplateView):
@@ -475,16 +424,16 @@ class EditRole(generic.TemplateView):
         role_id = request.POST.get('role_id')
         role = request.POST.get('role')
         permission = request.POST.getlist('permission[]')
-        convertList = ','.join(map(str,permission))
+        convertList = ','.join(map(str, permission))
         try:
             r = Role.objects.get(id=role_id)
             r.role = role
             r.permission = convertList
             r.save()
             message = "Roll details successfully updated"
-            return JsonResponse({'success': True, 'msg':message})
+            return JsonResponse({'success': True, 'msg': message})
         except Exception as e:
-            return JsonResponse({'success': False, 'msg':str(e)})
+            return JsonResponse({'success': False, 'msg': str(e)})
 
 
 class DeleteRole(View):
@@ -546,9 +495,9 @@ class PermissionTemplate(generic.TemplateView):
             p.method = method
             p.save()
             message = "permission added successfully"
-            return JsonResponse({'success': True, 'msg':message})
+            return JsonResponse({'success': True, 'msg': message})
         except Exception as e:
-            return JsonResponse({'success': False, 'msg':str(e)})
+            return JsonResponse({'success': False, 'msg': str(e)})
 
 
 class EditPermission(generic.TemplateView):
@@ -571,9 +520,9 @@ class EditPermission(generic.TemplateView):
             p.method = method
             p.save()
             message = "Permission details successfully updated"
-            return JsonResponse({'success': True, 'msg':message})
+            return JsonResponse({'success': True, 'msg': message})
         except Exception as e:
-            return JsonResponse({'success': False, 'msg':str(e)})
+            return JsonResponse({'success': False, 'msg': str(e)})
 
 
 class DeletePermission(View):
@@ -584,13 +533,14 @@ class DeletePermission(View):
 
 
 class AssignPermissionDatatableView(DatatablesServerSideView):
-	model = Permission
-	columns = ['id', 'permission', 'method', 'created_on', 'updated_on']
-	searchable_columns = ['permission']
+    model = Permission
+    columns = ['id', 'permission', 'method', 'created_on', 'updated_on']
+    searchable_columns = ['permission']
 
-	def get_initial_queryset(self):
-		qs = super(AssignPermissionDatatableView, self).get_initial_queryset().order_by('-id')
-		return qs
+    def get_initial_queryset(self):
+        qs = super(AssignPermissionDatatableView,
+                   self).get_initial_queryset().order_by('-id')
+        return qs
 
 
 class AssignPermissionTemplate(generic.TemplateView):
@@ -598,7 +548,8 @@ class AssignPermissionTemplate(generic.TemplateView):
     model = Permission, Role, RolePermission
 
     def get_context_data(self, role_id, **kwargs):
-        context = super(AssignPermissionTemplate, self).get_context_data(**kwargs)
+        context = super(AssignPermissionTemplate,
+                        self).get_context_data(**kwargs)
         context['roles'] = Role.objects.all()
         qry = "SELECT myapp_RolePermission.permission_id_id FROM myapp_RolePermission LEFT JOIN myapp_Permission ON myapp_RolePermission.id=myapp_Permission.id"
         cursor = connection.cursor()
@@ -633,6 +584,6 @@ class EditAssignPermission(generic.TemplateView):
             rp.permission_id_id = permission_id
             rp.save()
             message = "Permission details successfully updated"
-            return JsonResponse({'success': True, 'msg':message})
+            return JsonResponse({'success': True, 'msg': message})
         except Exception as e:
-            return JsonResponse({'success': False, 'msg':str(e)})
+            return JsonResponse({'success': False, 'msg': str(e)})

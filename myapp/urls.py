@@ -12,14 +12,11 @@ urlpatterns = [
     path('edituser', views.EditUser.as_view(), name='edituser'),
     path('deleteuser', views.DeleteUser.as_view(), name='deleteuser'),
 
-    path('listassignrole', views.AssignRoleDatatableView.as_view(), name='listassignrole'),
-    path('<int:user_id>/assignrole/', views.AssignRoleTemplate.as_view(), name='assignrole'),
+    path('listassignrole', views.AssignRoleDatatableView.as_view(),
+         name='listassignrole'),
+    path('<int:user_id>/assignrole/',
+         views.AssignRoleTemplate.as_view(), name='assignrole'),
     path('editassignrole', views.EditAssignRole.as_view(), name='editassignrole'),
-
-    path('listproduct', views.ProductDatatableView.as_view(), name='listproduct'),
-    path('product', views.ProductTemplate.as_view(), name='product'),
-    path('editproduct', views.EditProduct.as_view(), name='editproduct'),
-    path('deleteproduct', views.DeleteProduct.as_view(), name='deleteproduct'),
 
     path('listrole', views.RoleDatatableView.as_view(), name='listrole'),
     path('role', views.RoleTemplate.as_view(), name='role'),
@@ -29,10 +26,14 @@ urlpatterns = [
     path('listpermission', views.person_json, name='listpermission'),
     path('permission', views.PermissionTemplate.as_view(), name='permission'),
     path('editpermission', views.EditPermission.as_view(), name='editpermission'),
-    path('deletepermission', views.DeletePermission.as_view(), name='deletepermission'),
+    path('deletepermission', views.DeletePermission.as_view(),
+         name='deletepermission'),
 
-    path('listassignpermission', views.AssignPermissionDatatableView.as_view(), name='listassignpermission'),
-    path('<int:role_id>/assignpermission/', views.AssignPermissionTemplate.as_view(), name='assignpermission'),
-    path('editassignpermission', views.EditAssignPermission.as_view(), name='editassignpermission'),
+    path('listassignpermission', views.AssignPermissionDatatableView.as_view(
+    ), name='listassignpermission'),
+    path('<int:role_id>/assignpermission/',
+         views.AssignPermissionTemplate.as_view(), name='assignpermission'),
+    path('editassignpermission', views.EditAssignPermission.as_view(),
+         name='editassignpermission'),
 
 ]
