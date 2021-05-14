@@ -11,11 +11,13 @@ from .models import *
 from django.contrib.auth import *
 from django.contrib.auth.hashers import make_password
 from django.db import connection
+import math
 
 from django.core.paginator import Paginator
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Q
 from django.http.response import HttpResponse, HttpResponseBadRequest
+from django.utils import six
 from django.views.generic import View
 from myapp.parameters import (
     Column, ForeignColumn,
@@ -492,14 +494,38 @@ class DeleteRole(View):
         return JsonResponse({'success': True})
 
 
-class PermissionDatatableView(DatatablesServerSideView):
-	model = Permission
-	columns = ['id', 'permission', 'method', 'created_on', 'updated_on']
-	searchable_columns = ['permission']
+# class PermissionDatatableView(DatatablesServerSideView):
+# 	model = Permission
+# 	columns = ['id', 'permission', 'method', 'created_on', 'updated_on']
+# 	searchable_columns = ['permission']
 
-	def get_initial_queryset(self):
-		qs = super(PermissionDatatableView, self).get_initial_queryset().order_by('-id')
-		return qs
+# 	def get_initial_queryset(self):
+# 		qs = super(PermissionDatatableView, self).get_initial_queryset().order_by('-id')
+# 		return qs
+
+def person_json(request):
+    persons = Permission.objects.all()
+    total = persons.count()
+
+    _start = request.GET.get('start')
+    _length = request.GET.get('length')
+    if _start and _length:
+        start = int(_start)
+        length = int(_length)
+        page = math.ceil(start / length) + 1
+        per_page = length
+
+        persons = persons[start:start + length]
+
+    data = [person.to_dict_json() for person in persons]
+    response = {
+        'data': data,
+        'page': page,  # [opcional]
+        'per_page': per_page,  # [opcional]
+        'recordsTotal': total,
+        'recordsFiltered': total,
+    }
+    return JsonResponse(response)
 
 
 class PermissionTemplate(generic.TemplateView):
@@ -578,7 +604,6 @@ class AssignPermissionTemplate(generic.TemplateView):
         cursor = connection.cursor()
         cursor.execute(qry)
         datas = dictfetchall(cursor)
-        print(datas)
         context['rolepermission'] = datas
 
         pdata = Role.objects.filter(id=role_id)

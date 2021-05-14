@@ -26,7 +26,7 @@ urlpatterns = [
     path('editrole', views.EditRole.as_view(), name='editrole'),
     path('deleterole', views.DeleteRole.as_view(), name='deleterole'),
 
-    path('listpermission', views.PermissionDatatableView.as_view(), name='listpermission'),
+    path('listpermission', views.person_json, name='listpermission'),
     path('permission', views.PermissionTemplate.as_view(), name='permission'),
     path('editpermission', views.EditPermission.as_view(), name='editpermission'),
     path('deletepermission', views.DeletePermission.as_view(), name='deletepermission'),

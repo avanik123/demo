@@ -108,12 +108,11 @@
 
 <script>
     $(function () {
-        var rolePermission = "{{rolepermission|safe}}";
-        rolePermission = JSON.parse(JSON.stringify(rolePermission));
-        console.log(rolePermission[0])
+        console.log("{{ rolepermission|safe }}");
         $('#permission').DataTable({
             "processing": true,
             "serverSide": true,
+            "ordering": true, 
             "ajax": {
                 url: "{% url 'listassignpermission' %}",
                 type: "GET",
@@ -121,18 +120,20 @@
             },
             "columns": [
                 {mdata: "id", data: "id"},
-                {
-                    mData: null,
-                    bSortable: false,
-                    mRender: function ({id}) 
-                    { 
-                        return `<label class="switch"><input type="checkbox" id="assign" data-id="${id}"><span class="slider round"></span></label>`;
-                    }
-                },
+                {mdata: "id", data: "id"},
                 {mdata: "permission", data: "permission"},
                 {mdata: "method", data: "method"},
                 {mdata: "created_on", data: "created_on"},
                 {mdata: "updated_on", data: "updated_on"},
+            ],
+            "columnDefs": [
+                {
+                    targets: 1,
+                    render: function (data, type, full, meta) {
+                        console.log(full);
+                        return `<label class="switch"><input type="checkbox" id="assign" data-id="${full.id}"><span class="slider round"></span></label>`;
+                    }
+                }
             ]
         });
         
@@ -144,7 +145,7 @@
                 type: 'POST',
                 data: {
                     role_id : role_id,
-                    user_id : id,
+                    permission_id : id,
                     csrfmiddlewaretoken: "{{ csrf_token }}"
                 },
                 success: function(data, status, xhr)

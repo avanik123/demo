@@ -28,6 +28,15 @@ class Permission(models.Model):
     def __str__(self):
         return self.permission
 
+    def to_dict_json(self):
+        return {
+            'id': self.id,
+            'permission': self.permission,
+            'method': self.method,
+            'created_on': self.created_on,
+            'updated_on': self.updated_on,
+        }
+
 
 class Role(models.Model):
     role = models.CharField(max_length=200, unique=True)
