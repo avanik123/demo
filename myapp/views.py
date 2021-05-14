@@ -467,6 +467,7 @@ def person_json(request):
         persons = persons[start:start + length]
 
     data = [person.to_dict_json() for person in persons]
+    print(type(data))
     response = {
         'data': data,
         'page': page,  # [opcional]
