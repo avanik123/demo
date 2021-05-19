@@ -142,14 +142,14 @@
         {mdata: "id", data: "id"},
       ],
       "columnDefs": [
-      {
-        targets: 3,
-        render: function (data, type, full, meta) {
-          return `<button type="button" class="btn btn-primary" id="editUser" data-id="${full.id}"><i class="fas fa-pen"></i></button> 
-          <button type="button" class="btn btn-danger" id="deleteUser" data-id="${full.id}"><i class="fas fa-trash"></i></button>
-          <a type="button" class="btn btn-success" data-id="${full.id}" href="${full.id}/assignrole/">Role</a>`;
-        }
-      }
+        {
+          targets: 3,
+          render: function (data, type, full, meta) {
+            return `<button type="button" class="btn btn-primary" id="editUser" data-id="${full.id}"><i class="fas fa-pen"></i></button> 
+            <button type="button" class="btn btn-danger" id="deleteUser" data-id="${full.id}"><i class="fas fa-trash"></i></button>
+            <a type="button" class="btn btn-success" data-id="${full.id}" href="${full.id}/assignrole/">Role</a>`;
+          }
+        },
       ]
     });
 

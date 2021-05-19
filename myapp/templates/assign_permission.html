@@ -129,7 +129,27 @@
                     render: function (data, type, full, meta) {
                         return `<label class="switch"><input type="checkbox" id="assign" ${full.permission_id ? "checked": ""} data-id="${full.all_permission_id}"}"><span class="slider round"></span></label>`;
                     }
-                }
+                },
+                {
+                    targets: 4,
+                    render: function (data, type, full, meta) {
+                        return new Date(full.create_date).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                        })
+                    }
+                },
+                {
+                    targets: 5,
+                    render: function (data, type, full, meta) {
+                        return new Date(full.update_date).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                        })
+                    }
+                },
             ]
         });
 

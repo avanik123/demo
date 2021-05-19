@@ -126,13 +126,33 @@
                 {mdata: "id", data: "id"},
             ],
             "columnDefs": [
-            {
-                targets: 5,
-                render: function (data, type, full, meta) {
-                    return `<button type="button" class="btn btn-primary" id="editPermission" data-id="${full.id}"><i class="nav-icon fas fa-pen"></i></button> 
-                    <button type="button" class="btn btn-danger" id="deletePermission" data-id="${full.id}"><i class="nav-icon fas fa-trash"></button>`;
-                }
-            }
+                {
+                    targets: 3,
+                    render: function (data, type, full, meta) {
+                        return new Date(full.created_on).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                        })
+                    }
+                },
+                {
+                    targets: 4,
+                    render: function (data, type, full, meta) {
+                        return new Date(full.updated_on).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                        })
+                    }
+                },
+                {
+                    targets: 5,
+                    render: function (data, type, full, meta) {
+                        return `<button type="button" class="btn btn-primary" id="editPermission" data-id="${full.id}"><i class="nav-icon fas fa-pen"></i></button> 
+                        <button type="button" class="btn btn-danger" id="deletePermission" data-id="${full.id}"><i class="nav-icon fas fa-trash"></button>`;
+                    }
+                },
             ]   
         });
         

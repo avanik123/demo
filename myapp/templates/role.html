@@ -125,14 +125,34 @@
                 {mdata: "id", data: "id"},
             ],
             "columnDefs": [
-            {
-                targets: 4,
-                render: function (data, type, full, meta) {
-                    return `<button type="button" class="btn btn-primary" id="editRole" data-id="${full.id}"><i class="fas fa-pen"></i></button> 
-                    <button type="button" class="btn btn-danger" id="deleteRole" data-id="${full.id}"><i class="fas fa-trash"></i></button>
-                    <a type="button" class="btn btn-success" data-id="${full.id}" href="${full.id}/assignpermission/">Permission</a>`;
-                }
-            }
+                {
+                    targets: 2,
+                    render: function (data, type, full, meta) {
+                        return new Date(full.created_on).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                        })
+                    }
+                },
+                {
+                    targets: 3,
+                    render: function (data, type, full, meta) {
+                        return new Date(full.updated_on).toLocaleDateString("en-GB", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                        })
+                    }
+                },
+                {
+                    targets: 4,
+                    render: function (data, type, full, meta) {
+                        return `<button type="button" class="btn btn-primary" id="editRole" data-id="${full.id}"><i class="fas fa-pen"></i></button> 
+                        <button type="button" class="btn btn-danger" id="deleteRole" data-id="${full.id}"><i class="fas fa-trash"></i></button>
+                        <a type="button" class="btn btn-success" data-id="${full.id}" href="${full.id}/assignpermission/">Permission</a>`;
+                    }
+                },
             ]
         });
         
