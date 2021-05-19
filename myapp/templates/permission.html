@@ -37,7 +37,9 @@
                                     <th>Action</th>
                                 </tr>
                                 </thead>
-                                
+                                <tbody>
+
+                                </tbody>
                                 <tfoot>
                                 <tr>
                                     <th>Id</th>
@@ -106,14 +108,14 @@
 {% include "footer.html" %}
 
 <script>
-    $(function () {
+    $(document).ready(function() {
         $('#permission').DataTable({
+            "aLengthMenu": [[10, 20, 50, 75, -1], [10, 20, 50, 75, "All"]],
             "processing": true,
             "serverSide": true,
+            "order": [],
             "ajax": {
-                url: "{% url 'listpermission' %}",
-                type: "GET",
-                csrfmiddlewaretoken: "{{ csrf_token }}"
+                url: "{% url 'permission' %}"
             },
             "columns": [
                 {mdata: "id", data: "id"},
@@ -124,13 +126,14 @@
                 {mdata: "id", data: "id"},
             ],
             "columnDefs": [
-                {
-                    targets: 5,
-                    render: function (data, type, full, meta) {
-                        return `<button type="button" class="btn btn-primary" id="editPermission" data-id="${full.id}"><i class="nav-icon fas fa-pen"></i></button> <button type="button" class="btn btn-danger" id="deletePermission" data-id="${full.id}"><i class="nav-icon fas fa-trash"></button>`;
-                    }
+            {
+                targets: 5,
+                render: function (data, type, full, meta) {
+                    return `<button type="button" class="btn btn-primary" id="editPermission" data-id="${full.id}"><i class="nav-icon fas fa-pen"></i></button> 
+                    <button type="button" class="btn btn-danger" id="deletePermission" data-id="${full.id}"><i class="nav-icon fas fa-trash"></button>`;
                 }
-            ],
+            }
+            ]   
         });
         
         $("body").on('click', '.addPermission', function(){
@@ -150,7 +153,7 @@
                 },
                 success: function(data, status, xhr)
                 {
-                    $('#permission').DataTable().ajax.reload(null, false);
+                    $('#permission').DataTable().ajax.reload( null, false );
                     $("#permission")[0].reset();
                     $("#permissionPopup").modal('hide');
                 },

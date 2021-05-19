@@ -5,189 +5,12 @@ from django.views.generic import TemplateView
 from django.views import generic
 from django.contrib import messages
 from django.core import serializers
-import json
 from django.views.generic.base import View
 from .models import *
 from django.contrib.auth import *
 from django.contrib.auth.hashers import make_password
 from django.db import connection
-import math
-
-from django.core.paginator import Paginator
-from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import Q
-from django.http.response import HttpResponse, HttpResponseBadRequest
-from django.utils import six
-from django.views.generic import View
-from myapp.parameters import (
-    Column, ForeignColumn,
-    ColumnLink, PlaceholderColumnLink,
-    Order, ColumnOrderError)
 import json
-
-DATATABLES_SERVERSIDE_MAX_COLUMNS = 30
-
-
-class DatatablesServerSideView(View):
-    columns = []
-    searchable_columns = []
-    foreign_fields = {}
-    model = None
-
-    def __init__(self, *args, **kwargs):
-        super(DatatablesServerSideView, self).__init__(*args, **kwargs)
-        fields = {f.name: f for f in self.model._meta.get_fields()}
-
-        model_columns = {}
-        for col_name in self.columns:
-            if col_name in self.foreign_fields:
-                new_column = ForeignColumn(
-                    col_name, self.model,
-                    self.foreign_fields[col_name])
-            else:
-                new_column = Column(fields[col_name])
-
-            model_columns[col_name] = new_column
-
-        self._model_columns = model_columns
-        self.foreign_fields = self.foreign_fields
-
-    def get(self, request, *args, **kwargs):
-        if not request.is_ajax():
-            return HttpResponseBadRequest()
-        try:
-            params = self.read_parameters(request.GET)
-        except ValueError:
-            return HttpResponseBadRequest()
-
-        # Prepare the queryset and apply the search and order filters
-        qs = self.get_initial_queryset()
-
-        if 'search_value' in params:
-            qs = self.filter_queryset(params['search_value'], qs)
-
-        if len(params['orders']):
-            qs = qs.order_by(
-                *[order.get_order_mode() for order in params['orders']])
-
-        paginator = Paginator(qs, params['length'])
-        return HttpResponse(
-            json.dumps(
-                self.get_response_dict(paginator, params['draw'],
-                                       params['start']),
-                cls=DjangoJSONEncoder
-            ),
-            content_type="application/json")
-
-    def read_parameters(self, query_dict):
-        """ Converts and cleans up the GET parameters. """
-        params = {field: int(query_dict[field]) for field
-                  in ['draw', 'start', 'length']}
-
-        column_index = 0
-        has_finished = False
-        column_links = []
-
-        while column_index < DATATABLES_SERVERSIDE_MAX_COLUMNS and\
-                not has_finished:
-            column_base = 'columns[%d]' % column_index
-
-            try:
-                column_name = query_dict[column_base + '[name]']
-                if column_name != '':
-                    column_links.append(ColumnLink(
-                        column_name,
-                        self._model_columns[column_name],
-                        query_dict.get(column_base + '[orderable]'),
-                        query_dict.get(column_base + '[searchable]')))
-                else:
-                    column_links.append(PlaceholderColumnLink())
-            except KeyError:
-                has_finished = True
-
-            column_index += 1
-
-        orders = []
-        order_index = 0
-        has_finished = False
-        while order_index < len(self.columns) and not has_finished:
-            try:
-                order_base = 'order[%d]' % order_index
-                order_column = query_dict[order_base + '[column]']
-                orders.append(Order(
-                    order_column,
-                    query_dict[order_base + '[dir]'],
-                    column_links))
-            except ColumnOrderError:
-                pass
-            except KeyError:
-                has_finished = True
-
-            order_index += 1
-
-        search_value = query_dict.get('search[value]')
-        if search_value:
-            params['search_value'] = search_value
-
-        params.update({'column_links': column_links, 'orders': orders})
-        return params
-
-    def get_initial_queryset(self):
-        return self.model.objects.all()
-
-    def render_column(self, row, column):
-        return self._model_columns[column].render_column(row)
-
-    def prepare_results(self, qs):
-        json_data = []
-
-        for cur_object in qs:
-            retdict = {fieldname: self.render_column(cur_object, fieldname)
-                       for fieldname in self.columns}
-            self.customize_row(retdict, cur_object)
-            json_data.append(retdict)
-        return json_data
-
-    def get_response_dict(self, paginator, draw_idx, start_pos):
-        page_id = (start_pos // paginator.per_page) + 1
-        if page_id > paginator.num_pages:
-            page_id = paginator.num_pages
-        elif page_id < 1:
-            page_id = 1
-
-        objects = self.prepare_results(paginator.page(page_id))
-        return {"draw": draw_idx,
-                "recordsTotal": paginator.count,
-                "recordsFiltered": paginator.count,
-                "data": objects}
-
-    def customize_row(self, row, obj):
-        pass
-
-    def choice_field_search(self, column, search_value):
-        values_dict = self.choice_fields_completion[column]
-        matching_choices = [val for key, val in six.iteritems(values_dict)
-                            if key.startswith(search_value)]
-        return Q(**{column + '__in': matching_choices})
-
-    def filter_queryset(self, search_value, qs):
-        search_filters = Q()
-        for col in self.searchable_columns:
-            print("=====", col)
-            model_column = self._model_columns[col]
-            print("++++", model_column)
-
-            if model_column.has_choices_available:
-                search_filters |=\
-                    Q(**{col + '__in': model_column.search_in_choices(
-                        search_value)})
-            else:
-                query_param_name = model_column.get_field_search_path()
-
-                search_filters |=\
-                    Q(**{query_param_name+'__istartswith': search_value})
-
-        return qs.filter(search_filters)
 
 
 def dictfetchall(cursor):
@@ -241,27 +64,52 @@ def logout(request):
     return HttpResponseRedirect('/')
 
 
-class UserDatatableView(DatatablesServerSideView):
-    model = User
-    columns = ['id', 'username', 'email']
-    searchable_columns = ['username']
-    # orderable = ['id']
-
-    def get_initial_queryset(self):
-        qs = super(UserDatatableView,
-                   self).get_initial_queryset().order_by('-id')
-        return qs
-
-
 class UserTemplate(generic.TemplateView):
     template_name = 'user.html'
     model = User, Role
 
-    def get_context_data(self, **kwargs):
-        context = super(UserTemplate, self).get_context_data(**kwargs)
-        context['users'] = User.objects.all()
-        # context['roles'] = Role.objects.all()
-        return context
+    def get(self, request, *args, **kwargs):
+        context = {}
+        draw = self.request.GET.get('draw')
+        start = self.request.GET.get('start')
+        length = self.request.GET.get('length')
+        search_value = self.request.GET.get('search[value]')
+        order_column = self.request.GET.get('order[0][column]')
+        order_dir = self.request.GET.get('order[0][dir]')
+
+        if self.request.is_ajax():
+            columns = ['id', 'username', 'email']
+            qry = "SELECT * FROM User"
+            
+            if search_value:
+                qry += "  WHERE (id LIKE '%"+search_value+"%' OR "
+                qry += "username LIKE '%"+search_value+"%' OR "
+                qry += "email LIKE '%"+search_value+"%')"
+
+                # For order
+            if order_column and order_dir:
+                order_column = int(order_column)
+                qry += " ORDER BY " + columns[order_column] + " " + order_dir
+
+            with connection.cursor() as cursor1:
+                cursor1.execute(
+                    "SELECT count(*) FROM ("+ qry +") as total_count")
+                row = cursor1.fetchone()
+                permission_count = row[0]
+            
+            # For limit offset
+            if (start is not None) and (length is not None) and length != "-1":
+                qry += " LIMIT " + str(start) + "," + str(length)
+                
+            cursor = connection.cursor()
+            cursor.execute(qry)
+            permissions = dictfetchall(cursor)
+            context['data'] = permissions
+            context["draw"] = draw
+            context["recordsTotal"] = permission_count 
+            context["recordsFiltered"] = permission_count 
+            return JsonResponse(context)
+        return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
         name = self.request.POST.get('name')
@@ -318,30 +166,60 @@ class DeleteUser(View):
         return JsonResponse({'success': True})
 
 
-class AssignRoleDatatableView(DatatablesServerSideView):
-    model = Role
-    columns = ['id', 'role', 'created_on', 'updated_on']
-    searchable_columns = ['role']
-
-    def get_initial_queryset(self):
-        qs = super(AssignRoleDatatableView,
-                   self).get_initial_queryset().order_by('-id')
-        return qs
-
-
 class AssignRoleTemplate(generic.TemplateView):
     template_name = 'assign_role.html'
-    model = User, Role, UserRole
 
-    def get_context_data(self, user_id, **kwargs):
-        context = super(AssignRoleTemplate, self).get_context_data(**kwargs)
-        context['users'] = User.objects.all()
-        context['roles'] = Role.objects.all()
-        udata = User.objects.filter(id=user_id)
-        user_list = serializers.serialize('json', udata)
+    def get(self, request, user_id, *args, **kwargs):
+        context = {}
+        userdata = User.objects.filter(id=user_id)
+        user_list = serializers.serialize('json', userdata)
         user_id = json.loads(user_list)[0]['pk']
-        context['user_id'] = user_id
-        return context
+        context['users'] = user_id
+        user_name = json.loads(user_list)[0]['fields']['username']
+        context['username'] = user_name
+
+        draw = self.request.GET.get('draw')
+        start = self.request.GET.get('start')
+        length = self.request.GET.get('length')
+        search_value = self.request.GET.get('search[value]')
+        order_column = self.request.GET.get('order[0][column]')
+        order_dir = self.request.GET.get('order[0][dir]')
+
+        if self.request.is_ajax():
+            columns = ['all_role_id', 'role_id', 'role', 'create_date', 'update_date']
+            qry = " SELECT UR.role_id, R.id as all_role_id, R.role, R.created_on as create_date, R.updated_on as update_date FROM Role as R LEFT JOIN UserRole as UR ON UR.role_id=R.id AND UR.user_id = "+str(user_id)+" "
+            
+            # For search
+            if search_value:
+                qry += "  WHERE (all_role_id LIKE '%"+search_value+"%' OR "     
+                qry += "R.role LIKE '%"+search_value+"%' OR "
+                qry += "R.created_on LIKE '%"+search_value+"%' OR "           
+                qry += "R.updated_on LIKE '%"+search_value+"%')"
+
+            # For order
+            if order_column and order_dir:
+                order_column = int(order_column)
+                qry += " ORDER BY " + columns[order_column] + " " + order_dir
+
+            with connection.cursor() as cursor1:
+                cursor1.execute(
+                    "SELECT count(*) FROM ("+ qry +") as total_count")
+                row = cursor1.fetchone()
+                permission_count = row[0]
+            
+            # For limit offset
+            if (start is not None) and (length is not None) and length != "-1":
+                qry += " LIMIT " + str(start) + "," + str(length)
+                
+            cursor = connection.cursor()
+            cursor.execute(qry)
+            permissions = dictfetchall(cursor)
+            context['data'] = permissions
+            context["draw"] = draw
+            context["recordsTotal"] = permission_count 
+            context["recordsFiltered"] = permission_count 
+            return JsonResponse(context)
+        return render(request, self.template_name, context)
 
 
 class EditAssignRole(generic.TemplateView):
@@ -360,49 +238,77 @@ class EditAssignRole(generic.TemplateView):
         user_id = self.request.POST.get('user_id')
         try:
             ur = UserRole()
-            ur.role_id_id = role_id
-            ur.user_id_id = user_id
+            ur.role_id = role_id
+            ur.user_id = user_id
             ur.save()
             message = "Role details successfully updated"
             return JsonResponse({'success': True, 'msg': message})
         except Exception as e:
             return JsonResponse({'success': False, 'msg': str(e)})
 
+
+class DeleteAssignRole(View):
     def get(self, request, *args, **kwargs):
-        product_id = self.request.GET.get('product_id')
-        Product.objects.filter(id=product_id).delete()
+        role_id = self.request.GET.get('role_id')
+        UserRole.objects.filter(role_id=role_id).delete()
         return JsonResponse({'success': True})
-
-
-class RoleDatatableView(DatatablesServerSideView):
-    model = Role
-    columns = ['id', 'role', 'created_on', 'updated_on']
-    searchable_columns = ['role']
-
-    def get_initial_queryset(self):
-        qs = super(RoleDatatableView,
-                   self).get_initial_queryset().order_by('-id')
-        return qs
 
 
 class RoleTemplate(generic.TemplateView):
     template_name = 'role.html'
-    model = Role, Permission
 
-    def get_context_data(self, **kwargs):
-        context = super(RoleTemplate, self).get_context_data(**kwargs)
-        context['roles'] = Role.objects.all()
-        context['permissions'] = Permission.objects.all()
-        return context
+    def get(self, request, *args, **kwargs):
+        context = {}
+        draw = self.request.GET.get('draw')
+        start = self.request.GET.get('start')
+        length = self.request.GET.get('length')
+        search_value = self.request.GET.get('search[value]')
+        order_column = self.request.GET.get('order[0][column]')
+        order_dir = self.request.GET.get('order[0][dir]')
+
+        if self.request.is_ajax():
+            columns = ['id', 'role', 'created_on', 'updated_on']
+            qry = "SELECT * FROM Role"
+            
+            if search_value:
+                qry += "  WHERE (id LIKE '%"+search_value+"%' OR "
+                qry += "role LIKE '%"+search_value+"%' OR "
+                qry += "created_on LIKE '%"+search_value+"%' OR "
+                qry += "updated_on LIKE '%"+search_value+"%')"
+
+                # For order
+            if order_column and order_dir:
+                order_column = int(order_column)
+                qry += " ORDER BY " + columns[order_column] + " " + order_dir
+
+            with connection.cursor() as cursor1:
+                cursor1.execute(
+                    "SELECT count(*) FROM ("+ qry +") as total_count")
+                row = cursor1.fetchone()
+                permission_count = row[0]
+            
+            # For limit offset
+            if (start is not None) and (length is not None) and length != "-1":
+                qry += " LIMIT " + str(start) + "," + str(length)
+                
+            cursor = connection.cursor()
+            cursor.execute(qry)
+            permissions = dictfetchall(cursor)
+            context['data'] = permissions
+            context["draw"] = draw
+            context["recordsTotal"] = permission_count 
+            context["recordsFiltered"] = permission_count 
+            return JsonResponse(context)
+        return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
         role = self.request.POST.get('role')
-        permission = self.request.POST.getlist('permission[]')
-        convertList = ','.join(map(str, permission))
+        # permission = self.request.POST.getlist('permission[]')
+        # convertList = ','.join(map(str, permission))
         try:
             r = Role.object.create_in_bulk()
             r.role = role
-            r.permission = convertList
+            # r.permission = convertList
             r.save()
             message = "roll added successfully"
             return JsonResponse({'success': True, 'msg': message})
@@ -443,49 +349,55 @@ class DeleteRole(View):
         return JsonResponse({'success': True})
 
 
-# class PermissionDatatableView(DatatablesServerSideView):
-# 	model = Permission
-# 	columns = ['id', 'permission', 'method', 'created_on', 'updated_on']
-# 	searchable_columns = ['permission']
-
-# 	def get_initial_queryset(self):
-# 		qs = super(PermissionDatatableView, self).get_initial_queryset().order_by('-id')
-# 		return qs
-
-def person_json(request):
-    persons = Permission.objects.all()
-    total = persons.count()
-
-    _start = request.GET.get('start')
-    _length = request.GET.get('length')
-    if _start and _length:
-        start = int(_start)
-        length = int(_length)
-        page = math.ceil(start / length) + 1
-        per_page = length
-
-        persons = persons[start:start + length]
-
-    data = [person.to_dict_json() for person in persons]
-    print(type(data))
-    response = {
-        'data': data,
-        'page': page,  # [opcional]
-        'per_page': per_page,  # [opcional]
-        'recordsTotal': total,
-        'recordsFiltered': total,
-    }
-    return JsonResponse(response)
-
-
 class PermissionTemplate(generic.TemplateView):
     template_name = 'permission.html'
     model = Permission
 
-    def get_context_data(self, **kwargs):
-        context = super(PermissionTemplate, self).get_context_data(**kwargs)
-        context['permissions'] = Permission.objects.all()
-        return context
+    def get(self, request, *args, **kwargs):
+        context = {}
+        draw = self.request.GET.get('draw')
+        start = self.request.GET.get('start')
+        length = self.request.GET.get('length')
+        search_value = self.request.GET.get('search[value]')
+        order_column = self.request.GET.get('order[0][column]')
+        order_dir = self.request.GET.get('order[0][dir]')
+
+        if self.request.is_ajax():
+            columns = ['id', 'permission', 'method', 'created_on', 'updated_on']
+            qry = "SELECT * FROM Permission"
+            
+            # For search
+            if search_value:
+                qry += "  WHERE (id LIKE '%"+search_value+"%' OR "
+                qry += "permission LIKE '%"+search_value+"%' OR "
+                qry += "method LIKE '%"+search_value+"%' OR "
+                qry += "created_on LIKE '%"+search_value+"%' OR "
+                qry += "updated_on LIKE '%"+search_value+"%')"
+
+            # For order
+            if order_column and order_dir:
+                order_column = int(order_column)
+                qry += " ORDER BY " + columns[order_column] + " " + order_dir
+
+            with connection.cursor() as cursor1:
+                cursor1.execute(
+                    "SELECT count(*) FROM ("+ qry +") as total_count")
+                row = cursor1.fetchone()
+                permission_count = row[0]
+            
+            # For limit offset
+            if (start is not None) and (length is not None) and length != "-1":
+                qry += " LIMIT " + str(start) + "," + str(length)
+                
+            cursor = connection.cursor()
+            cursor.execute(qry)
+            permissions = dictfetchall(cursor)
+            context['data'] = permissions
+            context["draw"] = draw
+            context["recordsTotal"] = permission_count 
+            context["recordsFiltered"] = permission_count 
+            return JsonResponse(context)
+        return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
         permission = self.request.POST.get('permission')
@@ -533,36 +445,62 @@ class DeletePermission(View):
         return JsonResponse({'success': True})
 
 
-class AssignPermissionDatatableView(DatatablesServerSideView):
-    model = Permission
-    columns = ['id', 'permission', 'method', 'created_on', 'updated_on']
-    searchable_columns = ['permission']
-
-    def get_initial_queryset(self):
-        qs = super(AssignPermissionDatatableView,
-                   self).get_initial_queryset().order_by('-id')
-        return qs
-
-
 class AssignPermissionTemplate(generic.TemplateView):
     template_name = 'assign_permission.html'
-    model = Permission, Role, RolePermission
 
-    def get_context_data(self, role_id, **kwargs):
-        context = super(AssignPermissionTemplate,
-                        self).get_context_data(**kwargs)
-        context['roles'] = Role.objects.all()
-        qry = "SELECT myapp_RolePermission.permission_id_id FROM myapp_RolePermission LEFT JOIN myapp_Permission ON myapp_RolePermission.id=myapp_Permission.id"
-        cursor = connection.cursor()
-        cursor.execute(qry)
-        datas = dictfetchall(cursor)
-        context['rolepermission'] = datas
+    def get(self, request, role_id, *args, **kwargs):
+        context = {}
+        roledata = Role.objects.filter(id=role_id)
+        role_list = serializers.serialize('json', roledata)
+        role_id = json.loads(role_list)[0]['pk']
+        context['roles'] = role_id
+        role_name = json.loads(role_list)[0]['fields']['role']
+        context['rolename'] = role_name
+        
+        draw = self.request.GET.get('draw')
+        start = self.request.GET.get('start')
+        length = self.request.GET.get('length')
+        search_value = self.request.GET.get('search[value]')
+        order_column = self.request.GET.get('order[0][column]')
+        order_dir = self.request.GET.get('order[0][dir]')
 
-        pdata = Role.objects.filter(id=role_id)
-        permission_list = serializers.serialize('json', pdata)
-        role_id = json.loads(permission_list)[0]['pk']
-        context['role_id'] = role_id
-        return context
+        if self.request.is_ajax():
+            columns = ['all_permission_id', 'permission_id', 'permission', 'method', 'create_date', 'update_date']
+            qry = " SELECT RP.permission_id, P.id as all_permission_id, P.permission, P.method, P.created_on as create_date, P.updated_on as update_date FROM Permission as P LEFT JOIN RolePermission as RP ON RP.permission_id=P.id AND RP.role_id = "+str(role_id)+" "
+            
+            # For search
+            if search_value:
+                qry += "  WHERE (all_permission_id LIKE '%"+search_value+"%' OR "
+                qry += "P.permission LIKE '%"+search_value+"%' OR "
+                qry += "P.method LIKE '%"+search_value+"%' OR "
+                qry += "P.created_on LIKE '%"+search_value+"%' OR "
+                qry += "P.updated_on LIKE '%"+search_value+"%')"
+
+            # For order
+            if order_column and order_dir:
+                order_column = int(order_column)
+                print(order_column, order_dir)
+                qry += " ORDER BY " + columns[order_column] + " " + order_dir
+
+            with connection.cursor() as cursor1:
+                cursor1.execute(
+                    "SELECT count(*) FROM ("+ qry +") as total_count")
+                row = cursor1.fetchone()
+                permission_count = row[0]
+            
+            # For limit offset
+            if (start is not None) and (length is not None) and length != "-1":
+                qry += " LIMIT " + str(start) + "," + str(length)
+                
+            cursor = connection.cursor()
+            cursor.execute(qry)
+            permissions = dictfetchall(cursor)
+            context['data'] = permissions
+            context["draw"] = draw
+            context["recordsTotal"] = permission_count 
+            context["recordsFiltered"] = permission_count 
+            return JsonResponse(context)
+        return render(request, self.template_name, context)
 
 
 class EditAssignPermission(generic.TemplateView):
@@ -581,10 +519,17 @@ class EditAssignPermission(generic.TemplateView):
         permission_id = self.request.POST.get('permission_id')
         try:
             rp = RolePermission()
-            rp.role_id_id = role_id
-            rp.permission_id_id = permission_id
+            rp.role_id = role_id
+            rp.permission_id = permission_id
             rp.save()
             message = "Permission details successfully updated"
             return JsonResponse({'success': True, 'msg': message})
         except Exception as e:
             return JsonResponse({'success': False, 'msg': str(e)})
+
+
+class DeleteAssignPermission(View):
+    def get(self, request, *args, **kwargs):
+        permission_id = self.request.GET.get('permission_id')
+        RolePermission.objects.filter(permission_id=permission_id).delete()
+        return JsonResponse({'success': True})

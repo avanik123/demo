@@ -8,7 +8,7 @@
       <div class="container-fluid">
         <div class="row mb-2">
           <div class="col-sm-6">
-            <h1>User</h1>
+            <h1>Role</h1>
           </div>
         </div>
       </div><!-- /.container-fluid -->
@@ -21,7 +21,7 @@
           <div class="col-12">
             <div class="card">
               <div class="card-header">
-                <h1 class="card-title">User List</h1>
+                <h1 class="card-title">{{ username }} Role List</h1>
                 <button type="button" class="btn btn-primary addUser" style="float: right;">Add User</i></button>
                 <!-- <select class="custom-select" style="width:150px; float: right;">
                     {% for role in roles %}
@@ -127,81 +127,91 @@
 {% include "footer.html" %}
 
 <script>
-    $(function () {
-        console.log("{{ user_list }}");
-        $('#users').DataTable({
-            "processing": true,
-            "serverSide": true,
-            "ajax": {
-                url: "{% url 'listassignrole' %}",
-                type: "GET",
-                csrfmiddlewaretoken: "{{ csrf_token }}"
-            },
-            "columns": [
-                {mdata: "id", data: "id"},
-                {
-                    mData: null,
-                    bSortable: false,
-                    mRender: function ({id}) 
-                    { 
-                        return `<label class="switch"><input type="checkbox" id="assign" data-id="${id}"><span class="slider round"></span></label>`;
-                    }
-                },
-                {mdata: "role", data: "role"},
-                {mdata: "created_on", data: "created_on"},
-                {mdata: "updated_on", data: "updated_on"},
-            ]
-        });
-
-        $("#role").select2({
-            placeholder: "Select a roles",
-            allowClear: true
-        });
-
-        $("body").on('click', '.addUser', function(){
-            $("#userPopup").modal('show');
-            $("#password").show();
-            $("#passlabel").show();
-        });
-
-        $("#addUser").click(function(){
-            name = $("#name").val();
-            email = $("#email").val();
-            password = $("#password").val();
-            $.ajax({
-                url: "{% url 'user' %}",
-                type: "POST",
-                data: {
-                    name: name,
-                    email: email,
-                    passowrd: password,
-                    csrfmiddlewaretoken: "{{ csrf_token }}",
-                },
-                success: function(data, status, xhr)
-                {
-                    $('#users').DataTable().ajax.reload( null, false );
-                    $("#user")[0].reset();
-                    $("#userPopup").modal('hide');
-                },
-            });
-        }); 
-
-        $("body").on('click', '#assign', function(){
-            id = $(this).attr('data-id');
-            const user_id = "{{ user_id }}";            
-            $.ajax({
-                url: "{% url 'editassignrole' %}",
-                type: 'POST',
-                data: {
-                    user_id : user_id,
-                    role_id : id,
-                    csrfmiddlewaretoken: "{{ csrf_token }}"
-                },
-                success: function(data, status, xhr)
-                {
-                    toastr.success('Permission, Status change successfully.')
-                },
-            });
-        });
+  $(document).ready(function() {
+    const user_id = "{{ users }}";
+    $('#users').DataTable({
+      "aLengthMenu": [[10, 20, 50, 75, -1], [10, 20, 50, 75, "All"]],
+      "processing": true,
+      "serverSide": true,
+      "order": [],
+      "ajax": {},
+      "columns": [
+        {mdata: "id", data: "all_role_id"},
+        {mdata: "id", data: "id"},
+        {mdata: "role", data: "role"},
+        {mdata: "created_on", data: "create_date"},
+        {mdata: "updated_on", data: "update_date"},
+      ], 
+      "columnDefs": [
+      {
+        targets: 1,
+        render: function (data, type, full, meta) {
+          return `<label class="switch"><input type="checkbox" id="assign" ${full.role_id ? "checked": ""} data-id="${full.all_role_id}"><span class="slider round"></span></label>`;
+        }
+      }
+      ]
     });
+
+    $("#role").select2({
+      placeholder: "Select a roles",
+      allowClear: true
+    });
+
+    $("body").on('click', '.addUser', function(){
+      $("#userPopup").modal('show');
+      $("#password").show();
+      $("#passlabel").show();
+    });
+
+    $("#addUser").click(function(){
+      name = $("#name").val();
+      email = $("#email").val();
+      password = $("#password").val();
+      $.ajax({
+        url: "{% url 'user' %}",
+        type: "POST",
+        data: {
+          name: name,
+          email: email,
+          passowrd: password,
+          csrfmiddlewaretoken: "{{ csrf_token }}",
+        },
+        success: function(data, status, xhr)
+        {
+          $('#users').DataTable().ajax.reload( null, false );
+          $("#user")[0].reset();
+          $("#userPopup").modal('hide');
+        },
+      });
+    }); 
+
+    $("body").on('click', '#assign', function(){
+      id = $(this).attr('data-id');
+      let url = "";
+      let type = "";
+      if($(this).prop("checked") == false){
+        console.log("Checked", "remove");
+        url = "{% url 'deleteassignrole' %}";
+        type = 'GET';
+      } 
+      else if($(this).prop("checked") == true){
+        console.log("unChecked", "add");
+        url = "{% url 'editassignrole' %}";
+        type = 'POST';
+      }                  
+      $.ajax({
+        url: url,
+        type: type,
+        data: {
+          user_id : user_id,
+          role_id : id,
+          csrfmiddlewaretoken: "{{ csrf_token }}"
+        },
+        success: function(data, status, xhr)
+        {
+          toastr.success('Role Status change successfully.')
+        },
+      });
+    });
+  });
 </script>
