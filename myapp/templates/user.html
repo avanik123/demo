@@ -127,23 +127,26 @@
 <script>
   $(document).ready(function() {
     $('#users').DataTable({
-      "aLengthMenu": [[10, 20, 50, 75, -1], [10, 20, 50, 75, "All"]],
-      "processing": true,
-      "serverSide": true,
-      "ajax": {
+      aLengthMenu: [[10, 20, 50, 75, -1], [10, 20, 50, 75, "All"]],
+      dom: 'Bflrtip',
+      buttons: ["copy", "csv", "excel", "pdf"],
+      processing: true,
+      serverSide: true,
+      ajax: {
         url: "{% url 'user' %}",
         type: "GET",
         csrfmiddlewaretoken: "{{ csrf_token }}"
       },
-      "columns": [
+      columns: [
         {mdata: "id", data: "id"},
         {mdata: "name", data: "username"},
         {mdata: "email", data: "email"},
         {mdata: "id", data: "id"},
       ],
-      "columnDefs": [
+      columnDefs: [
         {
           targets: 3,
+          orderable: false,
           render: function (data, type, full, meta) {
             return `<button type="button" class="btn btn-primary" id="editUser" data-id="${full.id}"><i class="fas fa-pen"></i></button> 
             <button type="button" class="btn btn-danger" id="deleteUser" data-id="${full.id}"><i class="fas fa-trash"></i></button>
@@ -164,7 +167,7 @@
       $("#passlabel").show();
     });
 
-    $("#addUser").click(function(){
+    $("body").on('click', '#addUser', function(){
       name = $("#name").val();
       email = $("#email").val();
       password = $("#password").val();
@@ -206,7 +209,7 @@
       });
     });
 
-    $("#updateUser").click(function(){
+    $("body").on('click', '#updateUser', function(){
       name = $("#name").val();
       email = $("#email").val();
       $.ajax({

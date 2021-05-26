@@ -66,7 +66,7 @@ def logout(request):
 
 class UserTemplate(generic.TemplateView):
     template_name = 'user.html'
-    model = User, Role
+    model = UserRole
 
     def get(self, request, *args, **kwargs):
         context = {}
@@ -114,16 +114,17 @@ class UserTemplate(generic.TemplateView):
     def post(self, request, *args, **kwargs):
         name = self.request.POST.get('name')
         email = self.request.POST.get('email')
-        # role = self.request.POST.getlist('role[]')
-        # convertList = ','.join(map(str,role))
         password = self.request.POST.get('password')
         try:
             u = User()
             u.username = name
             u.email = email
-            # u.role = convertList
             u.password = make_password(password=password)
             u.save()
+            ur = UserRole()
+            ur.user_id = u.id
+            ur.role_id = 5
+            ur.save()
             message = "User added successfully"
             return JsonResponse({'success': True, 'msg': message})
         except Exception as e:
@@ -306,9 +307,8 @@ class RoleTemplate(generic.TemplateView):
         # permission = self.request.POST.getlist('permission[]')
         # convertList = ','.join(map(str, permission))
         try:
-            r = Role.object.create_in_bulk()
+            r = Role()
             r.role = role
-            # r.permission = convertList
             r.save()
             message = "roll added successfully"
             return JsonResponse({'success': True, 'msg': message})
@@ -355,7 +355,7 @@ class PermissionTemplate(generic.TemplateView):
 
     def get(self, request, *args, **kwargs):
         context = {}
-        draw = self.request.GET.get('draw')
+        draw =  self.request.GET.get('draw')
         start = self.request.GET.get('start')
         length = self.request.GET.get('length')
         search_value = self.request.GET.get('search[value]')
@@ -363,7 +363,7 @@ class PermissionTemplate(generic.TemplateView):
         order_dir = self.request.GET.get('order[0][dir]')
 
         if self.request.is_ajax():
-            columns = ['id', 'permission', 'method', 'created_on', 'updated_on']
+            columns = ['id1', 'id', 'permission', 'method', 'created_on', 'updated_on']
             qry = "SELECT * FROM Permission"
             
             # For search
@@ -400,17 +400,22 @@ class PermissionTemplate(generic.TemplateView):
         return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
+        # import pdb; pdb.set_trace()
         permission = self.request.POST.get('permission')
         method = self.request.POST.get('method')
         try:
+            Permission.objects.get(permission=permission, method= method) 
+        except Permission.DoesNotExist:
             p = Permission()
             p.permission = permission
             p.method = method
             p.save()
-            message = "permission added successfully"
-            return JsonResponse({'success': True, 'msg': message})
+            return JsonResponse({'success': False, 'msg': "permission added successfully"}, status=200)
+        except Permission.MultipleObjectsReturned:
+            return JsonResponse({'success': False, 'msg': "Method is already exists."}, status=422)
         except Exception as e:
             return JsonResponse({'success': False, 'msg': str(e)})
+        return JsonResponse({'success': True, 'msg': "Something went wrong!"}, status=400)
 
 
 class EditPermission(generic.TemplateView):
@@ -465,7 +470,7 @@ class AssignPermissionTemplate(generic.TemplateView):
         order_dir = self.request.GET.get('order[0][dir]')
 
         if self.request.is_ajax():
-            columns = ['all_permission_id', 'permission_id', 'permission', 'method', 'create_date', 'update_date']
+            columns = ['all_permission_id', 'all_permission_id', 'permission_id', 'permission', 'method', 'create_date', 'update_date']
             qry = " SELECT RP.permission_id, P.id as all_permission_id, P.permission, P.method, P.created_on as create_date, P.updated_on as update_date FROM Permission as P LEFT JOIN RolePermission as RP ON RP.permission_id=P.id AND RP.role_id = "+str(role_id)+" "
             
             # For search
@@ -505,14 +510,6 @@ class AssignPermissionTemplate(generic.TemplateView):
 
 class EditAssignPermission(generic.TemplateView):
     template_name = 'assign_permission.html'
-    model = Permission, Role
-
-    def get(self, request, *args, **kwargs,):
-        role_id = self.request.GET.get('role_id')
-        permission_id = self.request.GET.get('permission_id')
-        pdata = Permission.objects.filter(id=permission_id)
-        permission_list = serializers.serialize('json', pdata)
-        return JsonResponse(json.loads(permission_list)[0]['fields'])
 
     def post(self, request, *args, **kwargs):
         role_id = self.request.POST.get('role_id')
@@ -533,3 +530,28 @@ class DeleteAssignPermission(View):
         permission_id = self.request.GET.get('permission_id')
         RolePermission.objects.filter(permission_id=permission_id).delete()
         return JsonResponse({'success': True})
+
+
+class BulkEditAssignPermission(generic.TemplateView):
+    template_name = 'assign_permission.html'
+
+    def post(self, request, *args, **kwargs):
+        role_id = self.request.POST.get('role_id')
+        permission_id = self.request.POST.getlist('permission_id[]')
+        try:
+            for i in permission_id:
+                RolePermission.objects.get(role_id = role_id, permission_id = i) 
+                print(i)
+        except RolePermission.DoesNotExist:
+            for i in permission_id:
+                rp = RolePermission()
+                rp.role_id = role_id
+                rp.permission_id = i
+                rp.save()
+            return JsonResponse({'success': False, 'msg': "rolepermission added successfully"}, status=200)
+        except RolePermission.MultipleObjectsReturned:
+            return JsonResponse({'success': False, 'msg': "Method is already exists."}, status=422)
+        except Exception as e:
+            return JsonResponse({'success': False, 'msg': str(e)})
+        return JsonResponse({'success': True, 'msg': "Something went wrong!"}, status=400)
+        

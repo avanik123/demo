@@ -47,9 +47,20 @@
 
     <!-- Right navbar links -->
     <ul class="navbar-nav ml-auto">
-      <a href="{% url 'logout' %}" class="nav-link">
-        <i class="nav-icon fas fa-user-circle" aria-hidden="true"></i>
-      </a>
+      <li class="nav-item dropdown">
+        <a class="nav-link" data-toggle="dropdown" href="#" aria-expanded="false">
+          <i class="far fa-user-circle mr-2"></i>
+        </a>
+        <div class="dropdown-menu dropdown-menu-md dropdown-menu-right" style="left: inherit; right: 0px;">
+          <!-- <a href="https://idea2codeinfotech.com/yepso/ys-admin/update-profile" class="dropdown-item">
+            <i class="fas fa-pen mr-2"></i> Edit Profile
+          </a> -->
+          <div class="dropdown-divider"></div>
+          <a href="{% url 'logout' %}" class="dropdown-item">
+            <i class="fas fa-power-off mr-2"></i> Logout
+          </a>
+        </div>
+      </li>
     </ul>
   </nav>
   <!-- /.navbar -->
@@ -82,8 +93,15 @@
       <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false"> 
       
         <li class="nav-item">
+          <a href="{% url 'index' %}" id="dashboard" class="nav-link">
+            <i class="nav-icon fas fa-tachometer-alt"></i>
+              <p>Dashboard</p>
+          </a>
+        </li>
+
+        <li class="nav-item">
           <a href="{% url 'user' %}" class="nav-link">
-            <i class="nav-icon fas fa-users" aria-hidden="true"></i>
+            <i class="nav-icon fas fa-users"></i>
             <p>
               Users
             </p>
@@ -92,7 +110,7 @@
 
         <li class="nav-item">
           <a href="{% url 'permission' %}" class="nav-link">
-            <i class="nav-icon fas fa-user-check" aria-hidden="true"></i>
+            <i class="nav-icon fas fa-user-check"></i>
             <p>
               Permission
             </p>
@@ -101,7 +119,7 @@
         
         <li class="nav-item">
           <a href="{% url 'role' %}" class="nav-link">
-            <i class="nav-icon fas fa-users-cog" aria-hidden="true"></i>
+            <i class="nav-icon fas fa-users-cog"></i>
             <p>
               Roles
             </p>
@@ -121,3 +139,7 @@
 
 </body>
 </html>
+<script>
+
+
+</script>

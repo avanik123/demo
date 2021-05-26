@@ -26,4 +26,5 @@ urlpatterns = [
     path('<int:role_id>/assignpermission/',views.AssignPermissionTemplate.as_view(), name='assignpermission'),
     path('editassignpermission', views.EditAssignPermission.as_view(), name='editassignpermission'),
     path('deleteassignpermission', views.DeleteAssignPermission.as_view(), name='deleteassignpermission'),
+    path('bulkeditassignpermission', views.BulkEditAssignPermission.as_view(), name='bulkeditassignpermission'),
 ]

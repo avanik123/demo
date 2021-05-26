@@ -26,9 +26,10 @@
                             </div>
                             <!-- /.card-header -->
                             <div class="card-body">
-                                <table id="permission" class="table table-bordered table-striped">
+                                <table id="permissions" class="table table-bordered table-striped">
                                 <thead>
                                 <tr>
+                                    <th style="text-align: center; width: 45px;" class="sorting_disabled" rowspan="1" colspan="1" aria-label=""><button type="button" class="btn btn-default btn-sm checkbox-toggle allchk"><i class="far fa-square"></i></button></th>
                                     <th>Id</th>
                                     <th>Permission</th>
                                     <th>Method</th>
@@ -42,6 +43,7 @@
                                 </tbody>
                                 <tfoot>
                                 <tr>
+                                    <th style="text-align: center; width: 45px;" class="sorting_disabled" rowspan="1" colspan="1" aria-label=""><button type="button" class="btn btn-default btn-sm checkbox-toggle allchk"><i class="far fa-square"></i></button></th>
                                     <th>Id</th>
                                     <th>Permission</th>
                                     <th>Method</th>
@@ -109,15 +111,18 @@
 
 <script>
     $(document).ready(function() {
-        $('#permission').DataTable({
-            "aLengthMenu": [[10, 20, 50, 75, -1], [10, 20, 50, 75, "All"]],
-            "processing": true,
-            "serverSide": true,
-            "order": [],
-            "ajax": {
+        $('#permissions').DataTable({
+            aLengthMenu: [[10, 20, 50, 75, -1], [10, 20, 50, 75, "All"]],
+            dom: 'Bflrtip',
+            buttons: ["copy", "csv", "excel", "pdf"],
+            processing: true,
+            serverSide: true,
+            order: [],
+            ajax: {
                 url: "{% url 'permission' %}"
             },
-            "columns": [
+            columns: [
+                {mdata: "id1", data: "id1"},
                 {mdata: "id", data: "id"},
                 {mdata: "permission", data: "permission"},
                 {mdata: "method", data: "method"},
@@ -125,29 +130,31 @@
                 {mdata: "updated_on", data: "updated_on"},
                 {mdata: "id", data: "id"},
             ],
-            "columnDefs": [
+            columnDefs: [
                 {
-                    targets: 3,
+                    targets: 0,
+                    orderable: false,
                     render: function (data, type, full, meta) {
-                        return new Date(full.created_on).toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                        })
+                        return `<div style="text-align:center;"><input type="checkbox" class="allchk" name="allchk[]" value="${full.id}" data-id="${full.id}"></div>`;
                     }
                 },
                 {
                     targets: 4,
                     render: function (data, type, full, meta) {
-                        return new Date(full.updated_on).toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                        })
+                        var options = {month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"numeric", second:"numeric"};
+                        return new Date(full.created_on).toLocaleDateString("en-US", options)
                     }
                 },
                 {
                     targets: 5,
+                    render: function (data, type, full, meta) {
+                        var options = {month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"numeric", second:"numeric"};
+                        return new Date(full.updated_on).toLocaleDateString("en-US", options)
+                    }
+                },
+                {
+                    targets: 6,
+                    orderable: false,
                     render: function (data, type, full, meta) {
                         return `<button type="button" class="btn btn-primary" id="editPermission" data-id="${full.id}"><i class="nav-icon fas fa-pen"></i></button> 
                         <button type="button" class="btn btn-danger" id="deletePermission" data-id="${full.id}"><i class="nav-icon fas fa-trash"></button>`;
@@ -160,7 +167,7 @@
             $("#permissionPopup").modal('show');
         });
 
-        $("#addPermission").click(function(){
+        $("body").on('click', '#addPermission', function(){
             permission = $("#name").val();
             method = $("#method").val();
             $.ajax({
@@ -173,7 +180,7 @@
                 },
                 success: function(data, status, xhr)
                 {
-                    $('#permission').DataTable().ajax.reload( null, false );
+                    $('#permissions').DataTable().ajax.reload( null, false );
                     $("#permission")[0].reset();
                     $("#permissionPopup").modal('hide');
                 },
@@ -200,7 +207,7 @@
             });
         });
 
-        $("#updatePermission").click(function(){
+        $("body").on('click', '#updatePermission', function(){
             permission = $("#name").val();
             method = $("#method").val();
             $.ajax({
@@ -214,7 +221,8 @@
                 },
                 success: function(data, status, xhr)
                 {
-                    $('#permission').DataTable().ajax.reload( null, false );
+                    console.log(data);
+                    $('#permissions').DataTable().ajax.reload( null, false );
                     $("#permission")[0].reset();
                     $("#permissionPopup").modal('hide');
                 },
@@ -235,10 +243,24 @@
                 },
                 success: function(data, status, xhr)
                 {
-                    $('#roles').DataTable().ajax.reload( null, false );
+                    $('#permissions').DataTable().ajax.reload( null, false );
                 },
                 });  
             }
         });
+        
+        $('.checkbox-toggle').click(function () {
+            var clicks = $(this).data('clicks')
+            if (clicks) {
+                //Uncheck all checkboxes
+                $('.card-body input[class=\'allchk\']').prop('checked', false)
+                $('.checkbox-toggle .far.fa-check-square').removeClass('fa-check-square').addClass('fa-square')
+            } else {
+                //Check all checkboxes
+                $('.card-body input[class=\'allchk\']').prop('checked', true)
+                $('.checkbox-toggle .far.fa-square').removeClass('fa-square').addClass('fa-check-square')
+            }
+            $(this).data('clicks', !clicks)
+        })
     });
 </script>

@@ -22,14 +22,17 @@
                         <div class="card">
                             <div class="card-header">
                                 <h1 class="card-title">{{ rolename }} Permissions List</h1>
-                               
-                                <button type="button" class="btn btn-primary addPermission" style="float: right;">Add Permission</i></button>
+                                
+                                <button type="button" class="btn btn-primary addPermission" style="float: right; margin:1px;">Add Permission</i></button>
+                                
+                                <button class="btn btn-primary" type="button" id="muladdPermission" style="display:none; float: right; margin:1px;">Add Multiple Permission</button>
                             </div>
                             <!-- /.card-header -->
                             <div class="card-body">
-                                <table id="permission" class="table table-bordered table-striped">
+                                <table id="permissions" class="table table-bordered table-striped">
                                 <thead>
                                 <tr>
+                                    <th style="text-align: center; width: 45px;"><button type="button" class="btn btn-default btn-sm checkbox-toggle allchk" onclick="myFunction()"><i class="far fa-square"></i></button></th>
                                     <th>Id</th>
                                     <th>Status</th>
                                     <th>Permission</th>
@@ -41,6 +44,7 @@
                                 
                                 <tfoot>
                                 <tr>
+                                    <th style="text-align: center; width: 45px;"><button type="button" class="btn btn-default btn-sm checkbox-toggle allchk" onclick="myFunction()"><i class="far fa-square"></i></button></th>
                                     <th>Id</th>
                                     <th>Status</th>
                                     <th>Permission</th>
@@ -109,13 +113,16 @@
 <script>
     $(document).ready(function() {
         const role_id = "{{ roles }}";
-        $('#permission').DataTable({
-            "aLengthMenu": [[10, 20, 50, 75, -1], [10, 20, 50, 75, "All"]],
-            "processing": true,
-            "serverSide": true,
-            "order": [],
-            "ajax": {},
-            "columns": [
+        $('#permissions').DataTable({
+            aLengthMenu: [[10, 20, 50, 75, -1], [10, 20, 50, 75, "All"]],
+            dom: 'Bflrtip',
+            buttons: ["copy", "csv", "excel", "pdf"],
+            processing: true,
+            serverSide: true,
+            order: [],
+            ajax: {},
+            columns: [
+                {mdata: "id", data: "id"},
                 {mdata: "id", data: "all_permission_id"},
                 {mdata: "id", data: "id"},
                 {mdata: "permission", data: "permission"},
@@ -123,35 +130,61 @@
                 {mdata: "created_on", data: "create_date"},
                 {mdata: "updated_on", data: "update_date"},
             ],
-            "columnDefs": [
+            columnDefs: [
                 {
-                    targets: 1,
+                    targets: 0,
+                    orderable: false,
+                    render: function (data, type, full, meta) {
+                        return `<div style="text-align:center;"><input type="checkbox" class="allchk" name="allchk[]" value="${full.all_permission_id}" data-id="${full.all_permission_id}" onchange="myFunction()"></div>`;
+                    }
+                },
+                {
+                    targets: 2,
+                    orderable: false,
                     render: function (data, type, full, meta) {
                         return `<label class="switch"><input type="checkbox" id="assign" ${full.permission_id ? "checked": ""} data-id="${full.all_permission_id}"}"><span class="slider round"></span></label>`;
                     }
                 },
                 {
-                    targets: 4,
+                    targets: 5,
                     render: function (data, type, full, meta) {
-                        return new Date(full.create_date).toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                        })
+                        var options = {month:"short", day:"numeric", year:"numeric", hour:"numeric",  minute:"numeric", second:"numeric"};
+                        return new Date(full.create_date).toLocaleDateString("en-US", options)
                     }
                 },
                 {
-                    targets: 5,
+                    targets: 6,
                     render: function (data, type, full, meta) {
-                        return new Date(full.update_date).toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                        })
+                        var options = {month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"numeric",second:"numeric"};
+                        return new Date(full.update_date).toLocaleDateString("en-US", options)
                     }
                 },
             ]
+        })
+
+        $("body").on('click', '.addPermission', function(){
+            $("#permissionPopup").modal('show');
         });
+
+        $("body").on('click', '#addPermission', function(){
+            permission = $("#name").val();
+            method = $("#method").val();
+            $.ajax({
+                url: "{% url 'permission' %}",
+                type: "POST",
+                data: {
+                    permission: permission,
+                    method: method,
+                    csrfmiddlewaretoken: "{{ csrf_token }}",
+                },
+                success: function(data, status, xhr)
+                {
+                    $('#permissions').DataTable().ajax.reload( null, false );
+                    $("#permission")[0].reset();
+                    $("#permissionPopup").modal('hide');
+                },
+            });
+        }); 
 
         $("body").on('click', '#assign', function(){
             id = $(this).attr('data-id'); 
@@ -182,29 +215,42 @@
             });
         });
     
-        $("body").on('click', '.addPermission', function(){
-            $("#permissionPopup").modal('show');
-        });
+        $('.checkbox-toggle').click(function () {
+            var clicks = $(this).data('clicks')
+            if (clicks) {
+                //Uncheck all checkboxes
+                $('.card-body input[class=\'allchk\']').prop('checked', false)
+                $('.checkbox-toggle .far.fa-check-square').removeClass('fa-check-square').addClass('fa-square')
+            } else {
+                //Check all checkboxes
+                $('.card-body input[class=\'allchk\']').prop('checked', true)
+                $('.checkbox-toggle .far.fa-square').removeClass('fa-square').addClass('fa-check-square')
+            }
+            $(this).data('clicks', !clicks)
+        })
 
-        $("#addPermission").click(function(){
-            permission = $("#name").val();
-            method = $("#method").val();
+        $("body").on('click', '#muladdPermission', function(){
+            var permission_id = [];
+            $.each($("input[name='allchk[]']:checked"), function(){
+                permission_id.push($(this).val());
+            });
+            console.log(permission_id);
             $.ajax({
-                url: "{% url 'permission' %}",
-                type: "POST",
+                url: "{% url 'bulkeditassignpermission' %}",
+                type: 'POST',
                 data: {
-                    permission: permission,
-                    method: method,
-                    csrfmiddlewaretoken: "{{ csrf_token }}",
+                    role_id : role_id,
+                    permission_id : permission_id,
+                    csrfmiddlewaretoken: "{{ csrf_token }}"
                 },
                 success: function(data, status, xhr)
                 {
-                    $('#permission').DataTable().ajax.reload( null, false );
-                    $("#permission")[0].reset();
-                    $("#permissionPopup").modal('hide');
+                    $('#permissions').DataTable().ajax.reload( null, false );
                 },
             });
-        }); 
-
+        });   
     });
+    function myFunction(){
+        $("#muladdPermission").show();  
+    }
 </script>

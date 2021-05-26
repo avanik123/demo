@@ -110,43 +110,40 @@
 <script>
     $(document).ready(function () {
         $('#roles').DataTable({
-            "aLengthMenu": [[10, 20, 50, 75, -1], [10, 20, 50, 75, "All"]],
-            "processing": true,
-            "serverSide": true,
-            "order": [],
-            "ajax": {
+            aLengthMenu: [[10, 20, 50, 75, -1], [10, 20, 50, 75, "All"]],
+            dom: 'Bflrtip',
+            buttons: ["copy", "csv", "excel", "pdf"],
+            processing: true,
+            serverSide: true,
+            order: [],
+            ajax: {
                 url: "{% url 'role' %}",
             },
-            "columns": [
+            columns: [
                 {mdata: "id", data: "id"},
                 {mdata: "role", data: "role"},
                 {mdata: "created_on", data: "created_on"},
                 {mdata: "updated_on", data: "updated_on"},
                 {mdata: "id", data: "id"},
             ],
-            "columnDefs": [
+            columnDefs: [
                 {
                     targets: 2,
                     render: function (data, type, full, meta) {
-                        return new Date(full.created_on).toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                        })
+                        var options = {month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"numeric", second:"numeric"};
+                        return new Date(full.created_on).toLocaleDateString("en-US", options)
                     }
                 },
                 {
                     targets: 3,
                     render: function (data, type, full, meta) {
-                        return new Date(full.updated_on).toLocaleDateString("en-GB", {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                        })
+                        var options = {month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"numeric",second:"numeric"};
+                        return new Date(full.updated_on).toLocaleDateString("en-US", options)
                     }
                 },
                 {
                     targets: 4,
+                    orderable: false,
                     render: function (data, type, full, meta) {
                         return `<button type="button" class="btn btn-primary" id="editRole" data-id="${full.id}"><i class="fas fa-pen"></i></button> 
                         <button type="button" class="btn btn-danger" id="deleteRole" data-id="${full.id}"><i class="fas fa-trash"></i></button>
@@ -165,7 +162,7 @@
             $("#rolePopup").modal('show');
         });
 
-        $("#addRole").click(function(){
+        $("body").on('click', '#addRole', function(){
             role = $("#name").val();
             permission = $("#permission").val();
             $.ajax({
@@ -205,7 +202,7 @@
             });
         });
 
-        $("#updateRole").click(function(){
+        $("body").on('click', '#updateRole', function(){
             role = $("#name").val();
             permission = []
             $("#permission :selected").each(function() {
