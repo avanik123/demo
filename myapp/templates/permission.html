@@ -29,7 +29,6 @@
                                 <table id="permissions" class="table table-bordered table-striped">
                                 <thead>
                                 <tr>
-                                    <th style="text-align: center; width: 45px;" class="sorting_disabled" rowspan="1" colspan="1" aria-label=""><button type="button" class="btn btn-default btn-sm checkbox-toggle allchk"><i class="far fa-square"></i></button></th>
                                     <th>Id</th>
                                     <th>Permission</th>
                                     <th>Method</th>
@@ -43,7 +42,6 @@
                                 </tbody>
                                 <tfoot>
                                 <tr>
-                                    <th style="text-align: center; width: 45px;" class="sorting_disabled" rowspan="1" colspan="1" aria-label=""><button type="button" class="btn btn-default btn-sm checkbox-toggle allchk"><i class="far fa-square"></i></button></th>
                                     <th>Id</th>
                                     <th>Permission</th>
                                     <th>Method</th>
@@ -113,8 +111,35 @@
     $(document).ready(function() {
         $('#permissions').DataTable({
             aLengthMenu: [[10, 20, 50, 75, -1], [10, 20, 50, 75, "All"]],
-            dom: 'Bflrtip',
-            buttons: ["copy", "csv", "excel", "pdf"],
+            dom: '<"float-left"B><"float-right"f>rt<"row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>>',
+            buttons: [
+                {
+                    extend: 'copyHtml5',
+                    exportOptions: {
+                        columns: [0,1,2,3,4]
+                    }
+                },
+                {
+                    extend: 'excelHtml5',
+                    exportOptions: {
+                        columns: [0,1,2,3,4]
+                    }
+                },
+                {
+                    extend:  'csvHtml5',
+                    exportOptions:
+                    {
+                        columns: [0,1,2,3,4]
+                    }
+                },
+                {
+                    extend: 'pdfHtml5',
+                    exportOptions: {
+                        columns: [0,1,2,3,4]
+                    }
+                },
+            ],
+            select: true,
             processing: true,
             serverSide: true,
             order: [],
@@ -122,7 +147,6 @@
                 url: "{% url 'permission' %}"
             },
             columns: [
-                {mdata: "id1", data: "id1"},
                 {mdata: "id", data: "id"},
                 {mdata: "permission", data: "permission"},
                 {mdata: "method", data: "method"},
@@ -132,28 +156,21 @@
             ],
             columnDefs: [
                 {
-                    targets: 0,
-                    orderable: false,
-                    render: function (data, type, full, meta) {
-                        return `<div style="text-align:center;"><input type="checkbox" class="allchk" name="allchk[]" value="${full.id}" data-id="${full.id}"></div>`;
-                    }
-                },
-                {
-                    targets: 4,
+                    targets: 3,
                     render: function (data, type, full, meta) {
                         var options = {month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"numeric", second:"numeric"};
                         return new Date(full.created_on).toLocaleDateString("en-US", options)
                     }
                 },
                 {
-                    targets: 5,
+                    targets: 4,
                     render: function (data, type, full, meta) {
                         var options = {month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"numeric", second:"numeric"};
                         return new Date(full.updated_on).toLocaleDateString("en-US", options)
                     }
                 },
                 {
-                    targets: 6,
+                    targets: 5,
                     orderable: false,
                     render: function (data, type, full, meta) {
                         return `<button type="button" class="btn btn-primary" id="editPermission" data-id="${full.id}"><i class="nav-icon fas fa-pen"></i></button> 

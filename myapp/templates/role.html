@@ -111,8 +111,35 @@
     $(document).ready(function () {
         $('#roles').DataTable({
             aLengthMenu: [[10, 20, 50, 75, -1], [10, 20, 50, 75, "All"]],
-            dom: 'Bflrtip',
-            buttons: ["copy", "csv", "excel", "pdf"],
+            dom: '<"float-left"B><"float-right"f>rt<"row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>>',
+            buttons: [
+                {
+                    extend: 'copyHtml5',
+                    exportOptions: {
+                        columns: [0,1,2,3]
+                    }
+                },
+                {
+                    extend: 'excelHtml5',
+                    exportOptions: {
+                        columns: [0,1,2,3]
+                    }
+                },
+                {
+                    extend:  'csvHtml5',
+                    exportOptions:
+                    {
+                        columns: [0,1,2,3]
+                    }
+                },
+                {
+                    extend: 'pdfHtml5',
+                    exportOptions: {
+                        columns: [0,1,2,3]
+                    }
+                },
+            ],
+            select: true,
             processing: true,
             serverSide: true,
             order: [],

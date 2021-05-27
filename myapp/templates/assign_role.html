@@ -131,8 +131,35 @@
     const user_id = "{{ users }}";
     $('#users').DataTable({
       aLengthMenu: [[10, 20, 50, 75, -1], [10, 20, 50, 75, "All"]],
-      dom: 'Bflrtip',
-      buttons: ["copy", "csv", "excel", "pdf"],
+      dom: '<"float-left"B><"float-right"f>rt<"row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>>',
+      buttons: [
+        {
+          extend: 'copyHtml5',
+          exportOptions: {
+            columns: [0,2,3,4]
+          }
+        },
+        {
+          extend: 'excelHtml5',
+          exportOptions: {
+            columns: [0,2,3,4]
+          }
+        },
+        {
+          extend:  'csvHtml5',
+          exportOptions:
+          {
+            columns: [0,2,3,4]
+          }
+        },
+        {
+          extend: 'pdfHtml5',
+          exportOptions: {
+            columns: [0,2,3,4]
+          }
+        },
+      ],
+      select: true,
       processing: true,
       serverSide: true,
       order: [],

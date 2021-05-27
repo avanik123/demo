@@ -363,7 +363,7 @@ class PermissionTemplate(generic.TemplateView):
         order_dir = self.request.GET.get('order[0][dir]')
 
         if self.request.is_ajax():
-            columns = ['id1', 'id', 'permission', 'method', 'created_on', 'updated_on']
+            columns = ['id', 'permission', 'method', 'created_on', 'updated_on']
             qry = "SELECT * FROM Permission"
             
             # For search
@@ -540,7 +540,7 @@ class BulkEditAssignPermission(generic.TemplateView):
         permission_id = self.request.POST.getlist('permission_id[]')
         try:
             for i in permission_id:
-                RolePermission.objects.get(role_id = role_id, permission_id = i) 
+                rp = RolePermission.objects.get(role_id = role_id, permission_id = i) 
                 print(i)
         except RolePermission.DoesNotExist:
             for i in permission_id:

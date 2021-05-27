@@ -115,8 +115,35 @@
         const role_id = "{{ roles }}";
         $('#permissions').DataTable({
             aLengthMenu: [[10, 20, 50, 75, -1], [10, 20, 50, 75, "All"]],
-            dom: 'Bflrtip',
-            buttons: ["copy", "csv", "excel", "pdf"],
+            dom: '<"float-left"B><"float-right"f>rt<"row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>>',
+            buttons: [
+                {
+                    extend: 'copyHtml5',
+                    exportOptions: {
+                        columns: [1,3,4,5,6]
+                    }
+                },
+                {
+                    extend: 'excelHtml5',
+                    exportOptions: {
+                        columns: [1,3,4,5,6]
+                    }
+                },
+                {
+                    extend:  'csvHtml5',
+                    exportOptions:
+                    {
+                        columns: [1,3,4,5,6]
+                    }
+                },
+                {
+                    extend: 'pdfHtml5',
+                    exportOptions: {
+                        columns: [1,3,4,5,6]
+                    }
+                },
+            ],
+            select: true,
             processing: true,
             serverSide: true,
             order: [],
@@ -246,6 +273,7 @@
                 success: function(data, status, xhr)
                 {
                     $('#permissions').DataTable().ajax.reload( null, false );
+                    $("#muladdPermission").hide();
                 },
             });
         });   
