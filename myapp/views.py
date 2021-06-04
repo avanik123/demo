@@ -1,15 +1,12 @@
 from django.shortcuts import render
-from django.shortcuts import render, redirect
-from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
-from django.views.generic import TemplateView
+from django.http import JsonResponse, HttpResponseRedirect
 from django.views import generic
-from django.contrib import messages
 from django.core import serializers
 from django.views.generic.base import View
-from .models import *
 from django.contrib.auth import *
-from django.contrib.auth.hashers import make_password
 from django.db import connection
+from django.contrib.auth.hashers import make_password
+from .models import *
 import json
 
 
@@ -26,12 +23,19 @@ class HomeTemplate(generic.TemplateView):
     template_name = 'index.html'
     model = User
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
+        context = {}
         user_login = request.session.get("user_login", False)
         if user_login is True:
             u = request.session["user_data"]
             user = User.objects.get(email=u['email'])
-            return render(request, self.template_name, {'user': user})
+            users = User.objects.count()
+            context['users'] = users
+            users = Permission.objects.count()
+            context['permissions'] = users
+            users = Role.objects.count()
+            context['roles'] = users
+            return render(request, self.template_name, {'user': user, 'context': context})
         else:
             return HttpResponseRedirect('/')
 
@@ -40,18 +44,25 @@ class LoginTemplate(generic.TemplateView):
     template_name = 'login.html'
     model = User
 
+    def get(self, request):
+        user_login = request.session.get("user_login", False)
+        if user_login is True:
+            return HttpResponseRedirect('/dashboard/')
+        else:
+            return render(request, self.template_name)
+
     def post(self, request, *args, **kwargs):
         email = self.request.POST.get('email')
         password = self.request.POST.get('password')
         try:
             u = User.objects.get(email=email)
-            if u.check_password(password) is True:
+            if u.check_password("password") is True:
                 request.session['user_login'] = True
                 udata = {'id': u.id, 'email': u.email,
                          'password': u.password, 'username': u.username}
                 request.session['user_data'] = udata
                 print(udata)
-                return HttpResponseRedirect('/index/')
+                return HttpResponseRedirect('/dashboard/')
             else:
                 return render(request, self.template_name, status=401)
         except Exception:
@@ -119,7 +130,7 @@ class UserTemplate(generic.TemplateView):
             u = User()
             u.username = name
             u.email = email
-            u.password = make_password(password=password)
+            u.password = make_password("password")
             u.save()
             ur = UserRole()
             ur.user_id = u.id
@@ -450,6 +461,13 @@ class DeletePermission(View):
         return JsonResponse({'success': True})
 
 
+class BulkDeletePermission(View):
+    def get(self, request, *args, **kwargs):
+        permission_id = self.request.GET.getlist('permission_id[]')
+        Permission.objects.filter(id__in=permission_id).delete()
+        return JsonResponse({'success': True})
+
+
 class AssignPermissionTemplate(generic.TemplateView):
     template_name = 'assign_permission.html'
 
@@ -540,8 +558,7 @@ class BulkEditAssignPermission(generic.TemplateView):
         permission_id = self.request.POST.getlist('permission_id[]')
         try:
             for i in permission_id:
-                rp = RolePermission.objects.get(role_id = role_id, permission_id = i) 
-                print(i)
+                RolePermission.objects.get(role_id = role_id, permission_id = i) 
         except RolePermission.DoesNotExist:
             for i in permission_id:
                 rp = RolePermission()
@@ -550,7 +567,7 @@ class BulkEditAssignPermission(generic.TemplateView):
                 rp.save()
             return JsonResponse({'success': False, 'msg': "rolepermission added successfully"}, status=200)
         except RolePermission.MultipleObjectsReturned:
-            return JsonResponse({'success': False, 'msg': "Method is already exists."}, status=422)
+            return JsonResponse({'success': False, 'msg': "Permission is already exists."}, status=422)
         except Exception as e:
             return JsonResponse({'success': False, 'msg': str(e)})
         return JsonResponse({'success': True, 'msg': "Something went wrong!"}, status=400)

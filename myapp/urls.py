@@ -1,10 +1,10 @@
 from django.conf.urls import url
-from django.urls import path, include
+from django.urls import path
 from . import views
 
 urlpatterns = [
     url(r'^$', views.LoginTemplate.as_view(), name='login'),
-    path('index/', views.HomeTemplate.as_view(), name='index'),
+    path('dashboard/', views.HomeTemplate.as_view(), name='dashboard'),
     url(r'^logout/$', views.logout, name='logout'),
 
     path('user', views.UserTemplate.as_view(), name='user'),
@@ -22,6 +22,7 @@ urlpatterns = [
     path('permission', views.PermissionTemplate.as_view(), name='permission'),
     path('editpermission', views.EditPermission.as_view(), name='editpermission'),
     path('deletepermission', views.DeletePermission.as_view(), name='deletepermission'),
+    path('bulkdeletepermission', views.BulkDeletePermission.as_view(), name='bulkdeletepermission'),
 
     path('<int:role_id>/assignpermission/',views.AssignPermissionTemplate.as_view(), name='assignpermission'),
     path('editassignpermission', views.EditAssignPermission.as_view(), name='editassignpermission'),

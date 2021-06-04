@@ -23,12 +23,14 @@
                             <div class="card-header">
                                 <h1 class="card-title">Permission List</h1>
                                 <button type="button" class="btn btn-primary addPermission" style="float: right;">Add Permission</i></button>
+                                <button class="btn btn-primary" type="button" id="muldeletePermission" style="display:none; float: right; margin:1px;">Delete Multiple Permission</button>
                             </div>
                             <!-- /.card-header -->
                             <div class="card-body">
                                 <table id="permissions" class="table table-bordered table-striped">
                                 <thead>
                                 <tr>
+                                    <th style="text-align: center; width: 45px;"><button type="button" class="btn btn-default btn-sm checkbox-toggle allchk" onclick="myFunction()"><i class="far fa-square"></i></button></th>
                                     <th>Id</th>
                                     <th>Permission</th>
                                     <th>Method</th>
@@ -42,6 +44,7 @@
                                 </tbody>
                                 <tfoot>
                                 <tr>
+                                    <th style="text-align: center; width: 45px;"><button type="button" class="btn btn-default btn-sm checkbox-toggle allchk" onclick="myFunction()"><i class="far fa-square"></i></button></th>
                                     <th>Id</th>
                                     <th>Permission</th>
                                     <th>Method</th>
@@ -110,7 +113,7 @@
 <script>
     $(document).ready(function() {
         $('#permissions').DataTable({
-            aLengthMenu: [[10, 20, 50, 75, -1], [10, 20, 50, 75, "All"]],
+            aLengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
             dom: '<"float-left"B><"float-right"f>rt<"row"<"col-sm-4"l><"col-sm-4"i><"col-sm-4"p>>',
             buttons: [
                 {
@@ -148,6 +151,7 @@
             },
             columns: [
                 {mdata: "id", data: "id"},
+                {mdata: "id", data: "id"},
                 {mdata: "permission", data: "permission"},
                 {mdata: "method", data: "method"},
                 {mdata: "created_on", data: "created_on"},
@@ -156,21 +160,29 @@
             ],
             columnDefs: [
                 {
-                    targets: 3,
+                    targets: 0,
+                    orderable: false,
                     render: function (data, type, full, meta) {
-                        var options = {month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"numeric", second:"numeric"};
-                        return new Date(full.created_on).toLocaleDateString("en-US", options)
+                        console.log(full);
+                        return `<div style="text-align:center;"><input type="checkbox" class="allchk" name="allchk[]" value="${full.id}" data-id="${full.id}" onchange="myFunction()"></div>`;
                     }
                 },
                 {
                     targets: 4,
                     render: function (data, type, full, meta) {
                         var options = {month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"numeric", second:"numeric"};
-                        return new Date(full.updated_on).toLocaleDateString("en-US", options)
+                        return new Date(full.created_on).toLocaleDateString("en-US", options)
                     }
                 },
                 {
                     targets: 5,
+                    render: function (data, type, full, meta) {
+                        var options = {month:"short", day:"numeric", year:"numeric", hour:"numeric", minute:"numeric", second:"numeric"};
+                        return new Date(full.updated_on).toLocaleDateString("en-US", options)
+                    }
+                },
+                {
+                    targets: 6,
                     orderable: false,
                     render: function (data, type, full, meta) {
                         return `<button type="button" class="btn btn-primary" id="editPermission" data-id="${full.id}"><i class="nav-icon fas fa-pen"></i></button> 
@@ -279,5 +291,29 @@
             }
             $(this).data('clicks', !clicks)
         })
+        
+        $("body").on('click', '#muldeletePermission', function(){
+            var permission_id = [];
+            $.each($("input[name='allchk[]']:checked"), function(){
+                permission_id.push($(this).val());
+            });
+            console.log(permission_id);
+            $.ajax({
+                url: "{% url 'bulkdeletepermission' %}",
+                type: 'GET',
+                data: {
+                    permission_id : permission_id,
+                    csrfmiddlewaretoken: "{{ csrf_token }}"
+                },
+                success: function(data, status, xhr)
+                {
+                    $('#permissions').DataTable().ajax.reload( null, false );
+                    $("#muldeletePermission").hide();
+                },
+            });
+        });  
     });
+    function myFunction(){
+        $("#muldeletePermission").show();  
+    }
 </script>

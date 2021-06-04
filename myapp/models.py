@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
+from softdelete.models import SoftDeleteModel
 
 # Create your models here.
 class User(AbstractUser): 
@@ -25,7 +27,7 @@ class Product(models.Model):
         return self.pro_name
 
 
-class Permission(models.Model):
+class Permission(SoftDeleteModel):
     class Meta:
         db_table = "permission"
 
@@ -36,6 +38,11 @@ class Permission(models.Model):
 
     def __str__(self):
         return self.permission
+
+    def delete(self):
+         self.is_deleted = True
+         self.deleted_at = timezone.now()
+         self.save()   
 
 
 class Role(models.Model):
