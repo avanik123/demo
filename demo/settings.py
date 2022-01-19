@@ -37,8 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'softdelete',
     'myapp',
-    'softdelete'
 ]
 
 AUTH_USER_MODEL = "myapp.user"

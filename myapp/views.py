@@ -134,7 +134,7 @@ class UserTemplate(generic.TemplateView):
             u.save()
             ur = UserRole()
             ur.user_id = u.id
-            ur.role_id = 5
+            ur.role_id = 3
             ur.save()
             message = "User added successfully"
             return JsonResponse({'success': True, 'msg': message})
