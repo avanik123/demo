@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import JsonResponse, HttpResponseRedirect, HttpResponsePermanentRedirect
 from django.views import generic
 from django.core import serializers
 from django.views.generic.base import View
@@ -8,6 +8,10 @@ from django.db import connection
 from django.contrib.auth.hashers import make_password
 from .models import *
 import json
+import os
+
+class CustomRedirect(HttpResponsePermanentRedirect):
+    allowed_schemes = [os.environ.get('APP_SCHEME'), 'http', 'https']
 
 
 def dictfetchall(cursor):
