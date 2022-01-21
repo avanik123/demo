@@ -19,8 +19,6 @@ django-soft-delete==0.9.18
 django-taggit==1.2.0
 django-utils-six==2.0
 djangorestframework==3.12.4
-djangorestframework-jwt==1.11.0
-djangorestframework-simplejwt==4.7.2
 Eel==0.12.4
 ffmpeg-python==0.2.0
 Flask==2.0.1
