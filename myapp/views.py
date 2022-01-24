@@ -65,7 +65,6 @@ class LoginTemplate(generic.TemplateView):
                 udata = {'id': u.id, 'email': u.email,
                          'password': u.password, 'username': u.username}
                 request.session['user_data'] = udata
-                print(udata)
                 return HttpResponseRedirect('/dashboard/')
             else:
                 return render(request, self.template_name, status=401)

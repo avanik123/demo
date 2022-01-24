@@ -88,7 +88,6 @@
       event.preventDefault();
       email = $("#email").val();
       password = $("#password").val();
-      console.log(email, password);
       $.ajax({
         url: "{% url 'login' %}",
         type: "POST",
@@ -97,7 +96,8 @@
           password: password,
           csrfmiddlewaretoken: "{{ csrf_token }}",
         },
-        beforeSend:function(data){
+        beforeSend:function(data)
+        {
           $('#loginbtn').text("Loading...");
         },
         success: function(data, status, xhr)
@@ -110,7 +110,8 @@
           $("#errorDiv").attr("style","display:block");
           $('#errorText').html("Invalid email or password");
         },
-        complete:function(data){
+        complete:function(data)
+        {
           $('#loginbtn').text("Sign In");
           $(this).find(':input[type=submit]').prop('disabled', false);
         }
